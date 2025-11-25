@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client"
@@ -14,7 +9,76 @@ datasource db {
 }
 
 model User {
-  id    Int    @id @default(autoincrement())
+  id String @id @default(uuid())
+  employeeId String @unique
   name  String
-  email String
+  email String @unique
+  loginType String
+  phone String @unique
+  password String
+  branch Branch
+  role String?
+  date DateTime @default(now())
+  time DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Branch {
+  HYDERABAD_VS_HYD
+  VIJAYAWADA_VS_BZA
+  TIRUPATI_VS_TIR
+  VIZAG_VS_VIZAG
+  MUMBAI_VS_MUM
+  BANGALURU_VS_BAN
+  PUNE_VS_PUN
+  ASSOCIATES_VS_MOU
+  ONLINE
+  GEORGIA
+}
+
+
+model StudentRegistration {
+  id String @id @default(uuid())
+  // Personal Information
+  studentName     String
+  nationality     String
+  fathersName     String
+  dateOfBirth     DateTime
+  mobileNumber    String
+  email           String   @unique
+  parentMobile    String
+  gender          String
+  registrationDate DateTime @default(now())
+  // Present Address
+  addressLine1    String
+  addressLine2    String?
+  country         String
+  state           String
+  city            String
+  district        String
+  pincode         String
+  // Course Details
+  abroadMasters   String
+  courseName      String
+  serviceCharge   Float
+  academicYear    String
+  processedBy     String
+  counselorName   String
+  officeCity      String
+  assigneeName    String
+  passportNumber  String?
+
+  status          RegistrationStatus @default(HOLD)
+
+  // System Fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+
+enum RegistrationStatus {
+  CONFIRMED
+  HOLD
+  CANCELLED
 }
