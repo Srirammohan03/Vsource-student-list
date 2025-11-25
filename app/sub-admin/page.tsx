@@ -18,11 +18,11 @@ const TopNav: React.FC<{
 }> = ({ sidebarCollapsed, onToggleSidebar }) => {
   return (
     <header className="border-b bg-white py-3 px-4">
-      <div className="flex items-center justify-between max-w-6xl mx-auto">
+      <div className="mx-auto flex max-w-6xl items-center justify-between">
         <button
           onClick={onToggleSidebar}
           aria-label="Toggle sidebar"
-          className="p-2 rounded-md hover:bg-slate-100 text-sm font-medium text-slate-700"
+          className="rounded-md p-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
         >
           {sidebarCollapsed ? "Open sidebar" : "Close sidebar"}
         </button>
@@ -34,6 +34,7 @@ const TopNav: React.FC<{
 
 const emptyForm: FormState = {
   staffName: "",
+  employeeId: "",
   mobile: "",
   email: "",
   password: "",
@@ -75,7 +76,8 @@ export default function SubAdminPage() {
       (s) =>
         s.staffName.toLowerCase().includes(term) ||
         s.email.toLowerCase().includes(term) ||
-        s.mobile.toLowerCase().includes(term)
+        s.mobile.toLowerCase().includes(term) ||
+        s.employeeId.toLowerCase().includes(term)
     );
   }, [search, subAdmins]);
 
@@ -95,6 +97,7 @@ export default function SubAdminPage() {
     setEditingId(item.id);
     setForm({
       staffName: item.staffName,
+      employeeId: item.employeeId,
       mobile: item.mobile,
       email: item.email,
       password: item.password,
@@ -107,6 +110,8 @@ export default function SubAdminPage() {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!form.staffName.trim()) newErrors.staffName = "Staff Name is required";
+    if (!form.employeeId.trim())
+      newErrors.employeeId = "Employee ID is required";
     if (!form.mobile.trim()) newErrors.mobile = "Mobile is required";
     if (!form.email.trim()) newErrors.email = "Email is required";
     if (!form.password.trim()) newErrors.password = "Password is required";
@@ -124,6 +129,7 @@ export default function SubAdminPage() {
       if (editingId) {
         const updated = await subAdminService.update(editingId, {
           staffName: form.staffName,
+          employeeId: form.employeeId,
           mobile: form.mobile,
           email: form.email,
           password: form.password,
@@ -138,6 +144,7 @@ export default function SubAdminPage() {
       } else {
         const created = await subAdminService.create({
           staffName: form.staffName,
+          employeeId: form.employeeId,
           mobile: form.mobile,
           email: form.email,
           password: form.password,
@@ -146,6 +153,7 @@ export default function SubAdminPage() {
         setSubAdmins((prev) => [...prev, created]);
       }
 
+      // Close modal & reset form
       setModalOpen(false);
       setForm(emptyForm);
       setEditingId(null);
@@ -197,7 +205,7 @@ export default function SubAdminPage() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   type="text"
-                  placeholder="Search by name, email or mobile..."
+                  placeholder="Search by name, email, mobile or ID..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-64"

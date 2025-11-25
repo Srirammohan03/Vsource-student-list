@@ -4,6 +4,7 @@ import {
   LoginStep2Payload,
   AuthUser
 } from "@/types/auth";
+import { loginLogService } from "./loginLog.service"; 
 
 type TempLoginResponse = { data: { tempToken: string } };
 type MeResponse = { data: AuthResponse };

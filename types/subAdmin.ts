@@ -1,14 +1,15 @@
 // src/types/subAdmin.ts
 
+// Match Prisma enum Branch
 export type BranchCode =
-  | "VS_HYD"
-  | "VS_BZA"
-  | "VS_TIR"
-  | "VS_VIZAG"
-  | "VS_MUM"
-  | "VS_BAN"
-  | "VS_PUN"
-  | "VS_MOU"
+  | "HYDERABAD_VS_HYD"
+  | "VIJAYAWADA_VS_BZA"
+  | "TIRUPATI_VS_TIR"
+  | "VIZAG_VS_VIZAG"
+  | "MUMBAI_VS_MUM"
+  | "BANGALURU_VS_BAN"
+  | "PUNE_VS_PUN"
+  | "ASSOCIATES_VS_MOU"
   | "ONLINE"
   | "GEORGIA";
 
@@ -18,24 +19,30 @@ export type BranchOption = {
 };
 
 export const BRANCH_OPTIONS: BranchOption[] = [
-  { code: "VS_HYD", label: "Hyderabad (VS HYD)" },
-  { code: "VS_BZA", label: "Vijayawada (VS BZA)" },
-  { code: "VS_TIR", label: "Tirupati (VS TIR)" },
-  { code: "VS_VIZAG", label: "Vizag (VS VIZAG)" },
-  { code: "VS_MUM", label: "Mumbai (VS MUM)" },
-  { code: "VS_BAN", label: "Bengaluru (VS BAN)" },
-  { code: "VS_PUN", label: "Pune (VS PUN)" },
-  { code: "VS_MOU", label: "Associates (VS MOU)" },
+  { code: "HYDERABAD_VS_HYD", label: "Hyderabad (VS HYD)" },
+  { code: "VIJAYAWADA_VS_BZA", label: "Vijayawada (VS BZA)" },
+  { code: "TIRUPATI_VS_TIR", label: "Tirupati (VS TIR)" },
+  { code: "VIZAG_VS_VIZAG", label: "Vizag (VS VIZAG)" },
+  { code: "MUMBAI_VS_MUM", label: "Mumbai (VS MUM)" },
+  { code: "BANGALURU_VS_BAN", label: "Bengaluru (VS BAN)" },
+  { code: "PUNE_VS_PUN", label: "Pune (VS PUN)" },
+  { code: "ASSOCIATES_VS_MOU", label: "Associates (VS MOU)" },
   { code: "ONLINE", label: "Online" },
   { code: "GEORGIA", label: "Georgia" }
 ];
 
+// Frontend shape mapped from Prisma User
+// Prisma User:
+//  employeeId, name, email, phone, password, branch, role, loginType, date/time...
 export type SubAdmin = {
   id: string;
-  staffName: string;
-  mobile: string;
+  employeeId: string;
+  staffName: string;       // Prisma: name
+  mobile: string;          // Prisma: phone
   email: string;
   password: string;
-  branchCode: BranchCode;
-  createdAt: string;
+  branchCode: BranchCode;  // Prisma: branch
+  role?: string;
+  loginType?: string;
+  createdAt: string;       // ISO string
 };

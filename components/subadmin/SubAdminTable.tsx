@@ -27,6 +27,7 @@ export const SubAdminTable: React.FC<Props> = ({
         <thead className="bg-slate-50">
           <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-4 py-3">S.No</th>
+            <th className="px-4 py-3">Employee ID</th>
             <th className="px-4 py-3">Staff Name</th>
             <th className="px-4 py-3">Mobile Number</th>
             <th className="px-4 py-3">Email</th>
@@ -38,7 +39,7 @@ export const SubAdminTable: React.FC<Props> = ({
           {loading ? (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 className="px-4 py-6 text-center text-sm text-slate-600"
               >
                 Loading sub admins...
@@ -47,7 +48,7 @@ export const SubAdminTable: React.FC<Props> = ({
           ) : items.length === 0 ? (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 className="px-4 py-6 text-center text-sm text-slate-600"
               >
                 No sub admins added yet.
@@ -61,6 +62,9 @@ export const SubAdminTable: React.FC<Props> = ({
               >
                 <td className="px-4 py-3 text-xs text-slate-500">
                   {idx + 1}
+                </td>
+                <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                  {item.employeeId}
                 </td>
                 <td className="px-4 py-3 text-sm font-medium text-slate-900">
                   {item.staffName}
