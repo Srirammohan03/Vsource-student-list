@@ -16,18 +16,18 @@ export function Logo({ compact = false }: LogoProps) {
             src="https://res.cloudinary.com/drdotym31/image/upload/f_auto,q_auto/v1764049737/logo_zauzwn.jpg"
             alt="VSource Education"
             fill
-            className="object-cover rounded-md"
+            className="object-cover rounded-sm h-20 w-20"
             priority
           />
         </div>
       ) : (
         /* FULL LOGO */
-        <div className="relative h-14 w-36 overflow-hidden rounded-xl bg-white">
+        <div className="relative h-20 w-36 overflow-hidden rounded-xl bg-white">
           <Image
             src="https://res.cloudinary.com/drdotym31/image/upload/f_auto,q_auto/v1764049737/logo_zauzwn.jpg"
             alt="VSource Education"
             fill
-            className="object-contain p-1"
+            className="object-cover rounded-sm h-28 w-20"
             priority
           />
         </div>
