@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Sidebar } from "./sidebar";
-import { TopNav } from "./top-nav";
+import { TopNav } from "./top-nav"; 
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 

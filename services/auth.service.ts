@@ -37,7 +37,16 @@ const MOCK_USERS: MockUser[] = [
     employeeId: "EID003",
     role: "Accountant",
     password: "Account@123"
+  },
+    {
+    id: "VS-0100",
+    name: "Sub Admin User",
+    email: "subadmin@vsource.com",
+    employeeId: "EID010",
+    role: "SubAdmin",
+    password: "SubAdmin@123"
   }
+
 ];
 
 function delay(ms: number = 500) {
