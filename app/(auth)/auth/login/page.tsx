@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authService } from "@/services/auth.service";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -19,14 +14,17 @@ export default function LoginPage() {
   const [form1, setForm1] = useState({ email: "", password: "" });
   const [form2, setForm2] = useState({ employeeId: "" });
   const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
   const params = useSearchParams();
   const redirectTo = params.get("from") || "/dashboard";
 
+  /* ----------------------------- STEP 1 ----------------------------- */
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     try {
       const res = await authService.loginStep1(form1);
       setTempToken(res.data.tempToken);
@@ -38,15 +36,20 @@ export default function LoginPage() {
     }
   };
 
+  /* ----------------------------- STEP 2 ----------------------------- */
   const handleStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tempToken) return;
+
     setLoading(true);
     setError(null);
+
     try {
       await authService.loginStep2({
-        employeeId: form2.employeeId
+        employeeId: form2.employeeId,
+        tempToken, // FIXED REQUIRED FIELD
       });
+
       router.push(redirectTo);
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
@@ -57,13 +60,15 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-red-50 via-slate-50 to-sky-50 px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md rounded-2xl shadow-md">
         <CardHeader>
           <CardTitle className="text-center text-lg">
             VSource Education Admin Login
           </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
+          {/* Step Indicator */}
           <div className="flex justify-center gap-2 text-xs font-medium">
             <span
               className={
@@ -84,7 +89,8 @@ export default function LoginPage() {
             </p>
           )}
 
-          {step === 1 ? (
+          {/* ---------- STEP 1 UI ---------- */}
+          {step === 1 && (
             <form className="space-y-3" onSubmit={handleStep1}>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
@@ -99,6 +105,7 @@ export default function LoginPage() {
                   }
                 />
               </div>
+
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
                   Password
@@ -112,15 +119,15 @@ export default function LoginPage() {
                   }
                 />
               </div>
-              <Button
-                type="submit"
-                className="mt-2 w-full"
-                disabled={loading}
-              >
+
+              <Button className="mt-2 w-full" disabled={loading} type="submit">
                 {loading ? "Verifying..." : "Continue"}
               </Button>
             </form>
-          ) : (
+          )}
+
+          {/* ---------- STEP 2 UI ---------- */}
+          {step === 2 && (
             <form className="space-y-3" onSubmit={handleStep2}>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
@@ -134,13 +141,11 @@ export default function LoginPage() {
                   }
                 />
               </div>
-              <Button
-                type="submit"
-                className="mt-2 w-full"
-                disabled={loading}
-              >
+
+              <Button className="mt-2 w-full" disabled={loading} type="submit">
                 {loading ? "Signing in..." : "Login"}
               </Button>
+
               <button
                 type="button"
                 className="mt-2 w-full text-center text-xs text-slate-500 hover:text-primary"

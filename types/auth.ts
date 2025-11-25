@@ -15,6 +15,7 @@ export interface LoginStep1Payload {
 
 export interface LoginStep2Payload {
   employeeId: string;
+  tempToken: string;
 }
 
 export interface AuthResponse {
