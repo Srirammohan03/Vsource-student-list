@@ -6,6 +6,7 @@ import { BranchCode, BRANCH_OPTIONS } from "@/types/subAdmin";
 
 type FormState = {
   staffName: string;
+  employeeId: string;
   mobile: string;
   email: string;
   password: string;
@@ -70,7 +71,26 @@ export const SubAdminModal: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Mobile */}
+          {/* Employee ID */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              Employee ID
+            </label>
+            <input
+              type="text"
+              value={form.employeeId}
+              onChange={(e) => onChange("employeeId", e.target.value)}
+              placeholder="Enter Employee ID (e.g., VS-0001)"
+              pattern="^[A-Za-z0-9-_]+$"
+              title="Employee ID can contain letters, numbers, hyphen and underscore only."
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            {errors.employeeId && (
+              <p className="mt-1 text-xs text-red-600">{errors.employeeId}</p>
+            )}
+          </div>
+
+          {/* Mobile (exactly 10 digits) */}
           <div>
             <label className="block text-sm font-medium text-slate-700">
               Mobile
@@ -78,8 +98,16 @@ export const SubAdminModal: React.FC<Props> = ({
             <input
               type="tel"
               value={form.mobile}
-              onChange={(e) => onChange("mobile", e.target.value)}
-              placeholder="Enter Mobile"
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                const trimmed = value.slice(0, 10);
+                onChange("mobile", trimmed);
+              }}
+              placeholder="Enter Mobile (10 digits)"
+              maxLength={10}
+              pattern="^[0-9]{10}$"
+              inputMode="numeric"
+              title="Enter exactly 10 digits (without country code)."
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
             {errors.mobile && (
@@ -97,6 +125,8 @@ export const SubAdminModal: React.FC<Props> = ({
               value={form.email}
               onChange={(e) => onChange("email", e.target.value)}
               placeholder="Enter Email"
+              pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+              title="Enter a valid email address (example@domain.com)."
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
             {errors.email && (
