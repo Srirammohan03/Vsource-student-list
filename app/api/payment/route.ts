@@ -23,7 +23,7 @@ function generateInvoiceNumber(lastInvoice?: string) {
 
 export const POST = apiHandler(async (req: Request) => {
   const body = await req.json();
-
+  console.log(body)
   if (
     !body.studentId ||
     !body.feeType ||
