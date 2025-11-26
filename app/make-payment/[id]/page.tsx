@@ -11,7 +11,14 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
+// import { Toast } from "@/components/ui/toast";
+// import { toast } from "@/components/ui/use-toast";
+
 const paymentOptions = [
   { value: "online", label: "By Online Payment" },
   { value: "cash", label: "By Cash" },
@@ -24,12 +31,19 @@ const paymentOptions = [
   { value: "online-cash", label: "By Online & Cash" },
 ];
 
-export default function PaymentFormPage({ params }: any) {
-  const { id } = params;
+export default function PaymentFormPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [collapsed, setCollapsed] = useState(false);
-  const [feeType, setFeeType] = useState<string | undefined>();
-  const [paymentMethod, setPaymentMethod] = useState<string | undefined>();
+
+  const [feeType, setFeeType] = useState<string>();
+  const [paymentMethod, setPaymentMethod] = useState<string>();
+  const [bankDetails, setBankDetails] = useState("");
+  const [amount, setAmount] = useState("");
+  const [referenceNo, setReferenceNo] = useState("");
+
   const needsReferenceNo = [
     "online",
     "neft",
@@ -38,6 +52,94 @@ export default function PaymentFormPage({ params }: any) {
     "cash-swipe",
     "online-cash",
   ].includes(paymentMethod || "");
+
+  // ------------------------------
+  // FETCH STUDENT DETAILS
+  // ------------------------------
+  const fetchStudent = async () => {
+    const res = await fetch(`/api/student-registration/${id}`);
+    const json = await res.json();
+    return json.data;
+  };
+
+  const { data: student, isLoading } = useQuery({
+    queryKey: ["student", id],
+    queryFn: fetchStudent,
+  });
+
+  // ------------------------------
+  // FETCH PAYMENT HISTORY
+  // ------------------------------
+  const fetchPayments = async () => {
+    const res = await fetch(`/api/payment`);
+    const json = await res.json();
+    return json.data.filter((p: any) => p.studentId === id);
+  };
+
+  const { data: history = [] } = useQuery({
+    queryKey: ["payments", id],
+    queryFn: fetchPayments,
+  });
+
+  // ------------------------------
+  // SUBMIT PAYMENT MUTATION
+  // ------------------------------
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        studentId: id,
+        feeType,
+        subFeeType: null,
+        paymentMethod,
+        amount: Number(amount),
+        bankDetails,
+        referenceNo,
+      };
+
+      const res = await fetch("/api/payment", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) throw new Error(json.message);
+      return json.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Payment Successful",
+        description: "Payment entry created.",
+      });
+
+      queryClient.invalidateQueries(["payments", id]);
+      router.push("/make-payment");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-slate-500">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-500">
+        Student not found.
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full bg-slate-100">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
@@ -47,62 +149,34 @@ export default function PaymentFormPage({ params }: any) {
           sidebarCollapsed={collapsed}
           onToggleSidebar={() => setCollapsed((c) => !c)}
         />
+
         <div className="p-6">
           <h1 className="text-2xl font-semibold mb-6">Make Payments</h1>
 
-          <div className="rounded-xl bg-white border shadow-sm p-4 sm:p-6 lg:p-8 mb-8">
-            {/* Header */}
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
-              <h2 className="text-base sm:text-lg font-semibold">
-                Payment Information
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                VSource Education · Billing & Collections
-              </p>
-            </div>
-
-            {/* Content */}
-            <div className="grid gap-6 lg:gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] items-start">
-              {/* LEFT SIDE — STUDENT INFO */}
-              <div className="space-y-3 rounded-lg bg-slate-50/60 p-4">
+          {/* PAYMENT FORM */}
+          <div className="rounded-xl bg-white border shadow-sm p-6 mb-8">
+            <div className="grid md:grid-cols-2 gap-10">
+              {/* LEFT */}
+              <div className="space-y-3 bg-slate-50/60 p-4 rounded-lg">
                 <p className="text-sm">
-                  <span className="font-medium text-slate-700">
-                    Student Name :
-                  </span>{" "}
-                  <span className="text-slate-900">
-                    {mockStudent.studentName}
-                  </span>
+                  <span className="font-medium">Student:</span>{" "}
+                  {student.studentName}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium text-slate-700">Email :</span>{" "}
-                  <span className="text-slate-900 break-all">
-                    {mockStudent.email}
-                  </span>
+                  <span className="font-medium">Email:</span> {student.email}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium text-slate-700">
-                    Service Fee :
-                  </span>{" "}
-                  <span className="text-slate-900">
-                    {mockStudent.serviceFee}
-                  </span>
-                  <span className="ml-2 text-xs font-semibold text-red-600">
-                    (Bal - {mockStudent.due})
-                  </span>
-                </p>
-                <p className="text-sm">
-                  <span className="font-medium text-slate-700">Due :</span>{" "}
-                  <span className="text-slate-900">{mockStudent.due}</span>
+                  <span className="font-medium">Service Fee:</span>{" "}
+                  {student.serviceCharge}
                 </p>
               </div>
 
-              {/* RIGHT SIDE — PAYMENT FORM */}
+              {/* RIGHT — FORM */}
               <div className="space-y-4">
-                {/* Row 1: Fee Type + Payment Method */}
-                <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Fee Type */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  <div>
+                    <label className="text-[11px] font-medium uppercase">
                       Fee Type
                     </label>
                     <Select onValueChange={setFeeType}>
@@ -116,18 +190,18 @@ export default function PaymentFormPage({ params }: any) {
                   </div>
 
                   {/* Payment Method */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  <div>
+                    <label className="text-[11px] font-medium uppercase">
                       Payment Method
                     </label>
                     <Select onValueChange={setPaymentMethod}>
                       <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Choose payment type" />
+                        <SelectValue placeholder="Payment Method" />
                       </SelectTrigger>
                       <SelectContent>
-                        {paymentOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                        {paymentOptions.map((i) => (
+                          <SelectItem key={i.value} value={i.value}>
+                            {i.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -135,117 +209,95 @@ export default function PaymentFormPage({ params }: any) {
                   </div>
                 </div>
 
-                {/* Row 2: Company Bank + Amount */}
-                <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-                  {/* Company Bank Details */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                      Company Bank
-                    </label>
-                    <Select>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Select bank" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hdfc">HDFC Bank</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Amount */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                      Amount
-                    </label>
-                    <Input className="h-9" placeholder="Enter amount" />
-                  </div>
+                {/* Bank */}
+                <div>
+                  <label className="text-[11px] font-medium uppercase">
+                    Company Bank
+                  </label>
+                  <Input
+                    className="h-9"
+                    placeholder="Bank Name"
+                    value={bankDetails}
+                    onChange={(e) => setBankDetails(e.target.value)}
+                  />
                 </div>
 
-                {/* GST fields – only when Service Fee is selected */}
-                {feeType === "service-fee" && (
-                  <div className="space-y-2 rounded-md border border-dashed border-slate-200 bg-slate-50/60 p-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                        GST Details
-                      </label>
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Optional
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Input className="h-9" placeholder="GST %" />
-                      <Input className="h-9" placeholder="GST Amount" />
-                    </div>
-                  </div>
-                )}
+                {/* Amount */}
+                <div>
+                  <label className="text-[11px] font-medium uppercase">
+                    Amount
+                  </label>
+                  <Input
+                    className="h-9"
+                    placeholder="Enter Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                </div>
 
-                {/* Reference No – only for specific payment methods */}
+                {/* Reference No */}
                 {needsReferenceNo && (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  <div>
+                    <label className="text-[11px] font-medium uppercase">
                       Reference No
                     </label>
                     <Input
                       className="h-9"
-                      placeholder="Enter reference number"
+                      placeholder="Reference Number"
+                      value={referenceNo}
+                      onChange={(e) => setReferenceNo(e.target.value)}
                     />
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="mt-2 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Please verify all payment details before submitting. Once
-                    saved, this entry will be logged in the payment history.
-                  </p>
-                  <div className="flex gap-2 sm:gap-3">
-                    <Button className="h-9 px-4 text-sm">Submit</Button>
-                    <Button variant="outline" className="h-9 px-4 text-sm">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
+                <Button
+                  className="w-full h-9 mt-3"
+                  disabled={mutation.isPending}
+                  onClick={() => mutation.mutate()}
+                >
+                  {mutation.isPending ? "Saving..." : "Submit Payment"}
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* BELOW SECTION — PAYMENT HISTORY */}
+          {/* PAYMENT HISTORY TABLE */}
           <div className="rounded-xl bg-white p-6 shadow-md">
-            <h2 className="text-lg font-semibold mb-4">Make Payments</h2>
+            <h2 className="text-lg font-semibold mb-4">Payment History</h2>
 
-            <table className="min-w-full text-sm border rounded-lg">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-2 border">S.NO</th>
-                  <th className="p-2 border">Student Name</th>
-                  <th className="p-2 border">Fee Type</th>
-                  <th className="p-2 border">Sub Fee Type</th>
-                  <th className="p-2 border">Paid Amount</th>
-                  <th className="p-2 border">Type of Pay</th>
-                  <th className="p-2 border">Date</th>
-                  <th className="p-2 border">Invoice</th>
-                  <th className="p-2 border">Status</th>
-                </tr>
-              </thead>
+            {history.length === 0 ? (
+              <p className="text-sm text-slate-500">No payments found.</p>
+            ) : (
+              <table className="min-w-full text-sm border">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-2 border">S.No</th>
+                    <th className="p-2 border">Fee Type</th>
+                    <th className="p-2 border">Amount</th>
+                    <th className="p-2 border">Method</th>
+                    <th className="p-2 border">Date</th>
+                    <th className="p-2 border">Invoice</th>
+                    <th className="p-2 border">Status</th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                <tr>
-                  <td className="p-2 border">1</td>
-                  <td className="p-2 border">{mockStudent.studentName}</td>
-                  <td className="p-2 border">Service Fee</td>
-                  <td className="p-2 border">S.C (GST)</td>
-                  <td className="p-2 border">10000</td>
-                  <td className="p-2 border">OnlinePayment</td>
-                  <td className="p-2 border">27-11-2023</td>
-                  <td className="p-2 border">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      Generate
-                    </Button>
-                  </td>
-                  <td className="p-2 border text-green-600">Approved</td>
-                </tr>
-              </tbody>
-            </table>
+                <tbody>
+                  {history.map((p: any, index: number) => (
+                    <tr key={p.id}>
+                      <td className="p-2 border">{index + 1}</td>
+                      <td className="p-2 border">{p.feeType}</td>
+                      <td className="p-2 border">{p.amount}</td>
+                      <td className="p-2 border">{p.paymentMethod}</td>
+                      <td className="p-2 border">
+                        {new Date(p.date).toLocaleDateString()}
+                      </td>
+                      <td className="p-2 border">{p.invoiceNumber}</td>
+                      <td className="p-2 border text-green-600">{p.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
