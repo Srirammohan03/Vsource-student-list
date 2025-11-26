@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,20 +12,25 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import * as XLSX from "xlsx";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import { Pencil, Trash2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios";
 
 export default function StudentRegistrationList() {
   const router = useRouter();
-
-  // const [data, setData] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState(false);
-
-  // Filters
   const [masters, setMasters] = useState("");
   const [team, setTeam] = useState("");
   const [year, setYear] = useState("");
@@ -35,45 +39,50 @@ export default function StudentRegistrationList() {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
 
-  // Fetch Students
-  // useEffect(() => {
-  //   (async () => {
-  //     const res = await fetch("/api/student-registration");
-  //     const json = await res.json();
-  //     console.log(json);
-  //     setData(json.data || []);
-  //   })();
-  // }, []);
-  // FETCH via React Query
   const fetchStudents = async () => {
-    const res = await fetch("/api/student-registration");
-    const json = await res.json();
-    return json.data || [];
+    const res = await api.get("/api/student-registration");
+    return res.data.data || [];
   };
 
   const {
     data = [],
     isLoading,
     isError,
-    refetch,
   } = useQuery({
     queryKey: ["student-registrations"],
     queryFn: fetchStudents,
   });
 
-  // Filter Logic
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/student-registration/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-registrations"] });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this student?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const exportExcel = () => {
+    const sheet = XLSX.utils.json_to_sheet(filtered);
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Student Registrations");
+    XLSX.writeFile(book, "student-registration-list.xlsx");
+  };
+
   const filtered = useMemo(() => {
-    return data.filter((item) => {
+    return data.filter((item: any) => {
       if (masters && item.abroadMasters !== masters) return false;
       if (team && item.processedBy !== team) return false;
       if (year && item.academicYear !== year) return false;
       if (status && item.status !== status) return false;
-
       if (fromDate && new Date(item.registrationDate) < new Date(fromDate))
         return false;
       if (toDate && new Date(item.registrationDate) > new Date(toDate))
         return false;
-
       if (search) {
         const value = search.toLowerCase();
         if (
@@ -86,47 +95,24 @@ export default function StudentRegistrationList() {
           return false;
         }
       }
-
       return true;
     });
   }, [data, masters, team, year, status, fromDate, toDate, search]);
 
-  // Delete
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this student?")) return;
-
-    await fetch(`/api/student-registration/${id}`, { method: "DELETE" });
-
-    // Refresh using React Query
-    refetch();
-  };
-
-  // Excel Export
-  const exportExcel = () => {
-    const sheet = XLSX.utils.json_to_sheet(filtered);
-    const book = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(book, sheet, "Student Registrations");
-    XLSX.writeFile(book, "student-registration-list.xlsx");
-  };
-
   return (
     <div className="flex w-full bg-slate-100 min-h-screen">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
-
       <div className="flex-1 min-h-screen">
         <TopNav
           sidebarCollapsed={collapsed}
           onToggleSidebar={() => setCollapsed((c) => !c)}
         />
-
         <Card className="p-6 m-4 shadow-md bg-white">
           <h2 className="text-xl font-semibold mb-4">
             Student Registration List
           </h2>
 
-          {/* FILTERS */}
-          <div className="grid lg:grid-cols-6 md:grid-cols-3 sm:grid-cols-2 gap-4 mb-6">
-            {/* Masters */}
+          <div className="grid lg:grid-cols-6 md:grid-cols-3 sm:grid-cols-2 gap-4 mb-6 ">
             <div>
               <label className="text-sm font-medium">Abroad Masters</label>
               <Select onValueChange={setMasters}>
@@ -147,7 +133,6 @@ export default function StudentRegistrationList() {
               </Select>
             </div>
 
-            {/* Team */}
             <div>
               <label className="text-sm font-medium">Team</label>
               <Select onValueChange={setTeam}>
@@ -162,7 +147,6 @@ export default function StudentRegistrationList() {
               </Select>
             </div>
 
-            {/* Year */}
             <div>
               <label className="text-sm font-medium">Year</label>
               <Select onValueChange={setYear}>
@@ -182,7 +166,6 @@ export default function StudentRegistrationList() {
               </Select>
             </div>
 
-            {/* From Date */}
             <div>
               <label className="text-sm font-medium">From Date</label>
               <Input
@@ -191,13 +174,11 @@ export default function StudentRegistrationList() {
               />
             </div>
 
-            {/* To Date */}
             <div>
               <label className="text-sm font-medium">To Date</label>
               <Input type="date" onChange={(e) => setToDate(e.target.value)} />
             </div>
 
-            {/* Status */}
             <div>
               <label className="text-sm font-medium">Status</label>
               <Select onValueChange={setStatus}>
@@ -214,17 +195,14 @@ export default function StudentRegistrationList() {
             </div>
           </div>
 
-          {/* Buttons + Search */}
           <div className="flex gap-3 mb-4 items-center">
             <Button>Submit</Button>
-
             <Button
               onClick={exportExcel}
               className="bg-green-600 hover:bg-green-700"
             >
               Export to Excel
             </Button>
-
             <Input
               placeholder="Search..."
               className="ml-auto w-60"
@@ -233,67 +211,110 @@ export default function StudentRegistrationList() {
             />
           </div>
 
-          {/* TABLE */}
-          <div className="overflow-x-auto mt-6">
-            <table className="min-w-full border rounded-lg text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-2 border">S.No</th>
-                  <th className="p-2 border">Student ID</th>
-                  <th className="p-2 border">Team</th>
-                  <th className="p-2 border">Assignee</th>
-                  <th className="p-2 border">Counsellor</th>
-                  <th className="p-2 border">Student Name</th>
-                  <th className="p-2 border">Mobile</th>
-                  <th className="p-2 border">Email</th>
-                  <th className="p-2 border">Masters</th>
-                  <th className="p-2 border">Father Name</th>
-                  <th className="p-2 border">Father Mobile</th>
-                  <th className="p-2 border">Town/City</th>
-                  <th className="p-2 border">Status</th>
-                  <th className="p-2 border text-center">Actions</th>
-                </tr>
-              </thead>
+          <div className="hidden md:block overflow-x-scroll mt-6">
+            <Table className="border border-gray-300">
+              <TableHeader>
+                <TableRow className="border-b border-gray-300">
+                  <TableHead className="border-r">S.No</TableHead>
+                  <TableHead className="border-r">Student ID</TableHead>
+                  <TableHead className="border-r">Team</TableHead>
+                  <TableHead className="border-r">Assignee</TableHead>
+                  <TableHead className="border-r">Counsellor</TableHead>
+                  <TableHead className="border-r">Student Name</TableHead>
+                  <TableHead className="border-r">Mobile</TableHead>
+                  <TableHead className="border-r">Email</TableHead>
+                  <TableHead className="border-r">Masters</TableHead>
+                  <TableHead className="border-r">Father Name</TableHead>
+                  <TableHead className="border-r">Father Mobile</TableHead>
+                  <TableHead className="border-r">Town/City</TableHead>
+                  <TableHead className="border-r">Status</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
 
-              <tbody>
-                {filtered.map((item, index) => (
-                  <tr key={item?.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 border">{index + 1}</td>
-                    <td className="p-2 border">{item?.stid}</td>
-
-                    <td className="p-2 border">{item?.processedBy}</td>
-                    <td className="p-2 border">{item?.assigneeName}</td>
-                    <td className="p-2 border">{item?.counselorName}</td>
-                    <td className="p-2 border">{item?.studentName}</td>
-                    <td className="p-2 border">{item?.mobileNumber}</td>
-                    <td className="p-2 border">{item?.email}</td>
-                    <td className="p-2 border">{item?.abroadMasters}</td>
-                    <td className="p-2 border">{item?.fathersName}</td>
-                    <td className="p-2 border">{item?.parentMobile}</td>
-                    <td className="p-2 border">{item?.city}</td>
-                    <td className="p-2 border">{item?.status}</td>
-
-                    {/* Actions */}
-                    <td className="p-2 border text-center flex justify-center gap-2">
+              <TableBody>
+                {filtered.map((item: any, index: number) => (
+                  <TableRow key={item.id} className="hover:bg-gray-50 border-b">
+                    <TableCell className="border-r">{index + 1}</TableCell>
+                    <TableCell className="border-r">{item.stid}</TableCell>
+                    <TableCell className="border-r">
+                      {item.processedBy}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {item.assigneeName}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {item.counselorName}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {item.studentName}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {item.mobileNumber}
+                    </TableCell>
+                    <TableCell className="border-r">{item.email}</TableCell>
+                    <TableCell className="border-r">
+                      {item.abroadMasters}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {item.fathersName}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {item.parentMobile}
+                    </TableCell>
+                    <TableCell className="border-r">{item.city}</TableCell>
+                    <TableCell className="border-r">{item.status}</TableCell>
+                    <TableCell className="text-center flex justify-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          router.push(`/student-registration/${item?.id}`)
+                          router.push(`/student-registration/${item.id}`)
                         }
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
-
-                      <Button size="sm" onClick={() => handleDelete(item?.id)}>
+                      <Button size="sm" onClick={() => handleDelete(item.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
 
+            {filtered.length === 0 && (
+              <p className="text-center py-4 text-slate-500">
+                No records found
+              </p>
+            )}
+          </div>
+
+          <div className="md:hidden grid gap-4">
+            {filtered.map((item: any) => (
+              <Card key={item.id} className="p-4 shadow-sm border">
+                <div className="font-semibold">{item.studentName}</div>
+                <div className="text-sm">ID: {item.stid}</div>
+                <div className="text-sm">Mobile: {item.mobileNumber}</div>
+                <div className="text-sm">Email: {item.email}</div>
+                <div className="text-sm">Team: {item.processedBy}</div>
+                <div className="text-sm">Status: {item.status}</div>
+                <div className="flex justify-end gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      router.push(`/student-registration/${item.id}`)
+                    }
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" onClick={() => handleDelete(item.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
             {filtered.length === 0 && (
               <p className="text-center py-4 text-slate-500">
                 No records found

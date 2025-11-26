@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [
   "/api/auth/login-step1",
   "/api/auth/login-step2",
   "/api/auth/logout",
+  "/auth/forgot-password",
+  "/auth/reset-password",
 ];
 
 export function middleware(req: NextRequest) {

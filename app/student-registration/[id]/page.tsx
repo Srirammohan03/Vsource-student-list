@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import RegistrationForm from "@/components/student-registration/RegistrationForm";
+import api from "@/lib/axios";
 
 export default function EditStudentPage() {
   const router = useRouter();
@@ -17,14 +18,9 @@ export default function EditStudentPage() {
 
   // Fetch single student with React Query
   const fetchStudent = async () => {
-    const res = await fetch(`/api/student-registration/${id}`);
+    const { data } = await api.get(`/api/student-registration/${id}`);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch student");
-    }
-
-    const json = await res.json();
-    return json.data;
+    return data;
   };
 
   const {
@@ -65,7 +61,7 @@ export default function EditStudentPage() {
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
 
       {/* Main Content */}
-      <div className={collapsed ? "flex-1 lg:pl-16" : "flex-1 lg:pl-64"}>
+      <div className={collapsed ? "flex-1" : "flex-1"}>
         <TopNav
           sidebarCollapsed={collapsed}
           onToggleSidebar={() => setCollapsed((c) => !c)}
@@ -75,7 +71,7 @@ export default function EditStudentPage() {
           <h1 className="text-2xl font-semibold mb-4">Edit Student</h1>
 
           {/* Pass student to form */}
-          <RegistrationForm mode="edit" defaultValues={student} id={id} />
+          <RegistrationForm mode="edit" defaultValues={student.data} id={id} />
         </div>
       </div>
     </div>

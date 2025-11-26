@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { stateDistricts } from "@/lib/stateDistricts";
+
 interface RegistrationFormProps {
   mode?: "create" | "edit";
   defaultValues?: any;
@@ -51,6 +52,7 @@ export default function RegistrationForm({
   defaultValues,
   id,
 }: RegistrationFormProps) {
+  console.log(defaultValues);
   const [loading, setLoading] = useState(false);
 
   const academicYearOptions = useMemo(() => generateAcademicYearOptions(), []);
@@ -68,10 +70,10 @@ export default function RegistrationForm({
     mode: "onChange",
     reValidateMode: "onChange",
   });
+
   const stateValue = watch("state");
   const districts = stateDistricts[stateValue] || [];
 
-  // AUTO-FILL REGISTRATION DATE + prevent future DOB in UI
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function RegistrationForm({
       shouldDirty: true,
     });
   }, [setValue, todayStr]);
-  // If editing → load existing data into form
+
   useEffect(() => {
     if (defaultValues) {
       reset(defaultValues);
@@ -282,7 +284,7 @@ export default function RegistrationForm({
             </div>
 
             {/* REGISTRATION DATE */}
-            <div className="mt-6 grid md:grid-cols-3">
+            <div className="mt-6 grid md:grid-cols-3 gap-5">
               <div>
                 <Label>Registration Date</Label>
                 <Input type="date" readOnly {...register("registrationDate")} />
@@ -292,6 +294,34 @@ export default function RegistrationForm({
                   </p>
                 )}
               </div>
+
+              {mode === "edit" && (
+                <div>
+                  <Label>Status*</Label>
+                  <Select
+                    onValueChange={(v) =>
+                      setValue("status", v, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white">
+                      <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                      <SelectItem value="HOLD">Hold</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.status && (
+                    <p className="text-red-500 text-sm">
+                      {errors.status.message}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 
