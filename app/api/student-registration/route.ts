@@ -1,17 +1,22 @@
+import { RegistrationStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { NextResponse } from "next/server";
 
-export const GET = apiHandler(async () => {
+export const GET = apiHandler(async (req: Request) => {
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status") as RegistrationStatus | null;
+
   const students = await prisma.studentRegistration.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
+    where: status ? { status } : undefined,
+    orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(new ApiResponse(200, students));
+  return NextResponse.json(
+    new ApiResponse(200, students, "Students fetched successfully")
+  );
 });
 
 export const POST = apiHandler(async (req: Request) => {
