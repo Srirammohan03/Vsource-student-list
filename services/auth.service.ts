@@ -29,4 +29,10 @@ export const authService = {
       }
     );
   },
+  async sendResetToken(employeeId: string) {
+    return await api.post("/api/auth/forgot-password", { employeeId });
+  },
+  async resetPassword(payload: { resetToken: string; newPassword: string }) {
+    return api.post("/api/auth/reset-password", payload);
+  },
 };

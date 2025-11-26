@@ -119,6 +119,15 @@ export default function LoginPage() {
                   }
                 />
               </div>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => router.push("/auth/forgot-password")}
+                  className="text-xs text-slate-500 hover:text-primary"
+                >
+                  Forgot Password?
+                </button>
+              </div>
 
               <Button className="mt-2 w-full" disabled={loading} type="submit">
                 {loading ? "Verifying..." : "Continue"}
