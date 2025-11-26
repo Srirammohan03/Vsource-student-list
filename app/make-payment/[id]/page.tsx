@@ -283,20 +283,20 @@ export default function PaymentFormPage() {
                   {
                     <TableRow>
                       <TableCell>{1}</TableCell>
-                      <TableCell>{history.feeType}</TableCell>
-                      <TableCell>{history.amount}</TableCell>
+                      <TableCell>{history?.feeType}</TableCell>
+                      <TableCell>{history?.amount}</TableCell>
                       <TableCell>
-                        {history.gstPercent
-                          ? `${history.gstPercent}% (${history.gstAmount})`
+                        {history?.gst
+                          ? `${history?.gst}% (${history?.gstAmount})`
                           : "-"}
                       </TableCell>
-                      <TableCell>{history.paymentMethod}</TableCell>
+                      <TableCell>{history?.paymentMethod}</TableCell>
                       <TableCell>
-                        {new Date(history.date).toLocaleDateString()}
+                        {new Date(history?.date).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>{history.invoiceNumber}</TableCell>
+                      <TableCell>{history?.invoiceNumber}</TableCell>
                       <TableCell className="text-green-600">
-                        {history.status}
+                        {history?.status}
                       </TableCell>
                     </TableRow>
                   }
