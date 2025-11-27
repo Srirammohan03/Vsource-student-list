@@ -55,8 +55,8 @@ export default function PaymentFormPage() {
   const [bankDetails, setBankDetails] = useState("");
   const [amount, setAmount] = useState("");
   const [referenceNo, setReferenceNo] = useState("");
-  const [gstPercent, setGstPercent] = useState("");
-  const [gstAmount, setGstAmount] = useState("");
+  const [gstPercent, setGstPercent] = useState(0);
+  const [gstAmount, setGstAmount] = useState(0);
 
   const needsReferenceNo = [
     "online",
@@ -82,6 +82,24 @@ export default function PaymentFormPage() {
     queryFn: fetchStudent,
     placeholderData: keepPreviousData,
   });
+
+  useEffect(() => {
+    if (feeType === "service-fee") {
+      const base = Number(amount) || 0;
+      const gst = Number(gstPercent) || 0;
+
+      if (base > 0 && gst > 0) {
+        const calcGstAmount = (base * gst) / 100;
+        setGstAmount(Number(calcGstAmount.toFixed(2)));
+      } else {
+        setGstAmount(0);
+      }
+    } else {
+      // if not service-fee, clear GST fields
+      setGstPercent(0);
+      setGstAmount(0);
+    }
+  }, [feeType, amount, gstPercent]);
 
   useEffect(() => {
     if (isStudentError) {
@@ -220,20 +238,35 @@ export default function PaymentFormPage() {
                     onChange={(e) => setAmount(e.target.value)}
                   />
                   {feeType === "service-fee" && (
-                    <div className="grid grid-cols-2 gap-4 border p-3 rounded-lg bg-slate-50">
-                      <Input
-                        className="h-9"
-                        placeholder="GST %"
-                        value={gstPercent}
-                        onChange={(e) => setGstPercent(e.target.value)}
-                      />
-                      <Input
-                        className="h-9"
-                        placeholder="GST Amount"
-                        value={gstAmount}
-                        onChange={(e) => setGstAmount(e.target.value)}
-                      />
-                    </div>
+                    <>
+                      <div className="grid grid-cols-2 gap-4 border p-3 rounded-lg bg-slate-50">
+                        <Input
+                          type="number"
+                          className="h-9"
+                          placeholder="GST %"
+                          value={gstPercent}
+                          onChange={(e) =>
+                            setGstPercent(Math.max(0, Number(e.target.value)))
+                          }
+                          max={0}
+                        />
+                        <Input
+                          type="number"
+                          className="h-9"
+                          placeholder="GST Amount"
+                          value={gstAmount}
+                          readOnly
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-right">
+                        Total with GST:{" "}
+                        {amount && gstAmount
+                          ? (Number(amount) + Number(gstAmount)).toLocaleString(
+                              "en-IN"
+                            )
+                          : "--"}
+                      </p>
+                    </>
                   )}
                   {needsReferenceNo && (
                     <Input
@@ -265,6 +298,8 @@ export default function PaymentFormPage() {
             <h2 className="text-lg font-semibold mb-4">Payment History</h2>
             {isHistoryLoading ? (
               <Skeleton className="h-40 w-full" />
+            ) : !history ? (
+              <p>No Payment history found</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -281,23 +316,21 @@ export default function PaymentFormPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {
-                    <TableRow>
-                      <TableCell>{1}</TableCell>
-                      <TableCell>{history?.student?.studentName}</TableCell>
-                      <TableCell>{history?.feeType}</TableCell>
-                      <TableCell>{history?.subFeeType || "N/A"}</TableCell>
-                      <TableCell>{history?.amount}</TableCell>
-                      <TableCell>{history?.paymentMethod}</TableCell>
-                      <TableCell>{history?.invoiceNumber}</TableCell>
-                      <TableCell>
-                        {new Date(history?.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-green-600">
-                        {history?.status}
-                      </TableCell>
-                    </TableRow>
-                  }
+                  <TableRow>
+                    <TableCell>{1}</TableCell>
+                    <TableCell>{history?.student?.studentName}</TableCell>
+                    <TableCell>{history?.feeType.toUpperCase()}</TableCell>
+                    <TableCell>{history?.subFeeType || "N/A"}</TableCell>
+                    <TableCell>{history?.amount}</TableCell>
+                    <TableCell>{history?.paymentMethod}</TableCell>
+                    <TableCell>{history?.invoiceNumber}</TableCell>
+                    <TableCell>
+                      {new Date(history?.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-green-600">
+                      {history?.status}
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             )}

@@ -189,7 +189,6 @@ export default function TransactionsPage() {
   const [editForm, setEditForm] = useState({
     feeType: "",
     paymentMethod: "",
-    companyBank: "",
     amount: "",
     status: "",
   });
@@ -199,7 +198,6 @@ export default function TransactionsPage() {
       setEditForm({
         feeType: openEdit?.feeType || "",
         paymentMethod: openEdit?.paymentMethod || "",
-        companyBank: openEdit?.companyBank || "",
         amount: openEdit?.amount || "",
         status: openEdit?.status || "", // ✅ added
       });
@@ -273,11 +271,10 @@ export default function TransactionsPage() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] }); // Refresh table
-      setOpenEdit(null); // Close dialog
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      setOpenEdit(null);
     },
   });
-
   return (
     <div className="flex w-full bg-slate-100 min-h-screen">
       <Sidebar
@@ -431,7 +428,7 @@ export default function TransactionsPage() {
                     <TableCell>
                       <Button
                         className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => setOpenEdit(p)} // <-- FIX
+                        onClick={() => setOpenEdit(p)}
                       >
                         Edit
                       </Button>
@@ -511,10 +508,7 @@ export default function TransactionsPage() {
                   <SelectValue placeholder="Select Fee Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Service Fee">Service Fee</SelectItem>
-                  <SelectItem value="Application Fee">
-                    Application Fee
-                  </SelectItem>
+                  <SelectItem value="service-fee">Service Fee</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -577,9 +571,9 @@ export default function TransactionsPage() {
           <DialogFooter>
             <Button
               className="bg-blue-600 hover:bg-blue-700"
+              disabled={updatePaymentMutation?.isPending}
               onClick={() => {
                 const payload = { ...editForm };
-                delete payload.companyBank; // 🔥 MUST REMOVE
                 updatePaymentMutation.mutate({
                   id: openEdit.id,
                   ...payload,
@@ -589,7 +583,7 @@ export default function TransactionsPage() {
               {updatePaymentMutation.isPending ? "Saving..." : "Submit"}
             </Button>
 
-            <Button variant="secondary" onClick={() => setOpenEdit(null)}>
+            <Button variant="default" onClick={() => setOpenEdit(null)}>
               Cancel
             </Button>
           </DialogFooter>

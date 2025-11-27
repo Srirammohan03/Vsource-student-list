@@ -5,7 +5,6 @@ import { ApiResponse } from "@/utils/ApiResponse";
 import { NextResponse } from "next/server";
 
 export const GET = apiHandler(async (_req: Request, context: any) => {
-
   const { id } = context.params;
 
   if (!id) throw new ApiError(400, "payment student id is required");
@@ -13,17 +12,7 @@ export const GET = apiHandler(async (_req: Request, context: any) => {
   const payment = await prisma.payment.findUnique({
     where: { studentId: id },
     include: {
-      student: {
-        select: {
-          id: true,
-          stid: true,
-          studentName: true,
-          mobileNumber: true,
-          abroadMasters: true,
-          serviceCharge: true,
-          status: true,
-        },
-      },
+      student: true,
     },
   });
 
@@ -55,7 +44,6 @@ export const PATCH = apiHandler(async (req: Request, context: any) => {
     new ApiResponse(200, updatedPayment, "payment updated successfully")
   );
 });
-
 
 export const DELETE = apiHandler(async (_req: Request, context: any) => {
   const { id } = context.params;
