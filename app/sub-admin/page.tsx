@@ -17,7 +17,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const emptyForm: FormState = {
   staffName: "",
-  employeeId: "",
   mobile: "",
   email: "",
   password: "",
@@ -79,7 +78,6 @@ export default function SubAdminPage() {
     setEditingId(item.id);
     setForm({
       staffName: item.name,
-      employeeId: item.employeeId,
       mobile: item.phone,
       email: item.email,
       password: item.password || "",
@@ -207,6 +205,7 @@ export default function SubAdminPage() {
               open={modalOpen}
               loading={saveMutation.isPending}
               title={editingId ? "Edit Sub Admin" : "Add Sub Admin"}
+              mode={editingId ? "add" : "edit"}
               form={form}
               errors={errors}
               onChange={handleChange}
