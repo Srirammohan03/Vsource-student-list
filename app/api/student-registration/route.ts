@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
 import { ApiResponse } from "@/utils/ApiResponse";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -13,7 +13,7 @@ export const GET = apiHandler(async (req: Request) => {
 
   const students = await prisma.studentRegistration.findMany({
     where: status ? { status } : undefined,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
   });
 
   return NextResponse.json(
@@ -52,7 +52,7 @@ export const POST = apiHandler(async (req: Request, context: any) => {
   }
 
   let lastStudent = await prisma.studentRegistration.findFirst({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
     select: { stid: true },
   });
 

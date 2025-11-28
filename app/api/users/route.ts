@@ -44,7 +44,7 @@ export const POST = apiHandler(async (req: Request) => {
   const hashedPassword = await bcrypt.hash(body.password, 10);
 
   const lastEmployee = await prisma.user.findFirst({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
     select: { employeeId: true },
   });
 

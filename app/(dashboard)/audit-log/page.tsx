@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { User } from "@/types/loginLog";
 
 type AuditLog = {
   id: string;
@@ -28,6 +29,7 @@ type AuditLog = {
   ipAddress: string | null;
   userAgent: string | null;
   createdAt: string;
+  user: User;
 };
 
 export default function AuditLogPage() {
@@ -72,7 +74,8 @@ export default function AuditLogPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Module</TableHead>
               <TableHead>Action</TableHead>
@@ -85,40 +88,45 @@ export default function AuditLogPage() {
           <TableBody>
             {filteredLogs.map((log) => (
               <>
-                <TableRow key={log.id}>
-                  <TableCell>{log.userId || "System"}</TableCell>
+                <TableRow key={log?.id}>
+                  <TableCell>{log?.user.name || "System"}</TableCell>
+                  <TableCell>{log?.user.email || "System"}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{log.role || "N/A"}</Badge>
+                    <Badge variant="outline">{log?.role || "N/A"}</Badge>
                   </TableCell>
-                  <TableCell>{log.module}</TableCell>
+                  <TableCell>{log?.module}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        log.action === "CREATE"
+                        log?.action === "CREATE"
                           ? "default"
-                          : log.action === "UPDATE"
+                          : log?.action === "UPDATE"
                           ? "secondary"
                           : "destructive"
                       }
                     >
-                      {log.action}
+                      {log?.action}
                     </Badge>
                   </TableCell>
-                  <TableCell>{log.ipAddress}</TableCell>
+                  <TableCell>{log?.ipAddress}</TableCell>
                   <TableCell className="max-w-xs truncate">
-                    {log.userAgent}
+                    {log?.userAgent}
                   </TableCell>
                   <TableCell>
-                    {new Date(log.createdAt).toLocaleString()}
+                    {new Date(log?.createdAt).toLocaleString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
-                      onClick={() => toggleExpand(log.id)}
+                      onClick={() => toggleExpand(log?.id)}
                       className="flex items-center gap-2"
                     >
-                      {expandedRow === log.id ? "Hide" : "Show"}
-                      {expandedRow === log.id ? (
+                      {expandedRow === log?.id ? "Hide" : "Show"}
+                      {expandedRow === log?.id ? (
                         <ChevronUp size={16} />
                       ) : (
                         <ChevronDown size={16} />
@@ -127,25 +135,81 @@ export default function AuditLogPage() {
                   </TableCell>
                 </TableRow>
 
-                {expandedRow === log.id && (
+                {expandedRow === log?.id && (
                   <TableRow>
-                    <TableCell colSpan={8} className="bg-muted">
-                      <div className="p-4 grid grid-cols-2 gap-4">
+                    <TableCell colSpan={8} className="bg-muted p-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        {/* Field Name */}
                         <div>
-                          <h3 className="font-medium mb-2">Old Values</h3>
-                          <pre className="bg-gray-900 text-gray-200 p-3 rounded-lg text-sm overflow-auto max-h-64">
-                            {log.oldValues
-                              ? JSON.stringify(log.oldValues, null, 2)
-                              : "N/A"}
-                          </pre>
+                          <h3 className="font-medium mb-2">Field</h3>
+                          {Object.keys({
+                            ...log?.oldValues,
+                            ...log?.newValues,
+                          }).map((field) => (
+                            <p key={field} className="text-sm py-1 border-b">
+                              {field}
+                            </p>
+                          ))}
                         </div>
+
+                        {/* Old Values */}
                         <div>
-                          <h3 className="font-medium mb-2">New Values</h3>
-                          <pre className="bg-gray-900 text-gray-200 p-3 rounded-lg text-sm overflow-auto max-h-64">
-                            {log.newValues
-                              ? JSON.stringify(log.newValues, null, 2)
-                              : "N/A"}
-                          </pre>
+                          <h3 className="font-medium mb-2 text-red-600">
+                            Old Value
+                          </h3>
+                          {Object.keys({
+                            ...log?.oldValues,
+                            ...log?.newValues,
+                          }).map((field) => {
+                            const oldValue = log?.oldValues?.[field];
+                            const newValue = log?.newValues?.[field];
+                            const changed = oldValue !== newValue;
+
+                            return (
+                              <p
+                                key={field}
+                                className={`text-sm py-1 border-b ${
+                                  changed
+                                    ? "text-red-600 font-medium"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {oldValue !== undefined
+                                  ? String(oldValue)
+                                  : "--"}
+                              </p>
+                            );
+                          })}
+                        </div>
+
+                        {/* New Values */}
+                        <div>
+                          <h3 className="font-medium mb-2 text-green-600">
+                            New Value
+                          </h3>
+                          {Object.keys({
+                            ...log?.oldValues,
+                            ...log?.newValues,
+                          }).map((field) => {
+                            const oldValue = log?.oldValues?.[field];
+                            const newValue = log?.newValues?.[field];
+                            const changed = oldValue !== newValue;
+
+                            return (
+                              <p
+                                key={field}
+                                className={`text-sm py-1 border-b ${
+                                  changed
+                                    ? "text-green-600 font-semibold"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {newValue !== undefined
+                                  ? String(newValue)
+                                  : "--"}
+                              </p>
+                            );
+                          })}
                         </div>
                       </div>
                     </TableCell>

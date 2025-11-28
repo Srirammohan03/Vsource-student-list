@@ -5,6 +5,7 @@ import { ApiResponse } from "@/utils/ApiResponse";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { getChangedFields, USER_ALLOWED_FIELDS } from "@/utils/auditFields";
 
 export const PUT = apiHandler(async (req: Request, context: any) => {
   const { id } = context.params;
@@ -54,6 +55,20 @@ export const PUT = apiHandler(async (req: Request, context: any) => {
     throw new ApiError(404, `No user found with id ${id}`);
   }
 
+  const newUser = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  if (!newUser) {
+    throw new ApiError(404, `No user found with id ${id}`);
+  }
+
+  const { oldValues, newValues } = getChangedFields(
+    oldUser,
+    newUser!,
+    USER_ALLOWED_FIELDS
+  );
+
   await prisma.auditLog.create({
     data: {
       userId: currentUser?.id || null,
@@ -61,8 +76,8 @@ export const PUT = apiHandler(async (req: Request, context: any) => {
       action: "UPDATE",
       module: "User",
       recordId: updatedUser.id,
-      oldValues: oldUser!,
-      newValues: body,
+      oldValues,
+      newValues,
       ipAddress:
         req.headers.get("x-forwarded-for") ||
         req.headers.get("x-real-ip") ||

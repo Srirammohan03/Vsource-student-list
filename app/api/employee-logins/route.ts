@@ -53,7 +53,7 @@ export const POST = apiHandler(async (req: Request) => {
 
 export const GET = apiHandler(async () => {
   const users = await prisma.employeeLoginDetail.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
     include: {
       user: {
         select: {

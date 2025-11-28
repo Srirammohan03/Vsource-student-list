@@ -34,6 +34,30 @@ export const STUDENT_ALLOWED_FIELDS = [
   "status",
 ];
 
+export const USER_ALLOWED_FIELDS = [
+  "employeeId",
+  "name",
+  "email",
+  "loginType",
+  "phone",
+  "password",
+  "branch",
+  "role",
+];
+
+export const PAYMENT_ALLOWED_FIELDS = [
+  "feeType",
+  "subFeeType",
+  "paymentMethod",
+  "amount",
+  "invoiceNumber",
+  "status",
+  "bankDetails",
+  "gst",
+  "gstAmount",
+  "referenceNo",
+];
+
 function normalize(value: any) {
   if (value instanceof Date) return value.toISOString().split("T")[0];
   if (typeof value === "string" && !isNaN(Date.parse(value)))

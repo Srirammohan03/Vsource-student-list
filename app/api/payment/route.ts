@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
 import { ApiResponse } from "@/utils/ApiResponse";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
 function generateInvoiceNumber(lastInvoice?: string) {
   const currentYear = new Date().getFullYear();
@@ -38,6 +40,26 @@ export const POST = apiHandler(async (req: Request) => {
     );
   }
 
+  const token = cookies().get("token")?.value;
+  let currentUser: { id: string; role: string | null } | null = null;
+
+  if (!token) throw new ApiError(401, "Not authenticated");
+
+  let decoded: any;
+
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    currentUser = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+  } catch (error) {
+    throw new ApiError(401, "Invalid or expired token");
+  }
+
   if (body.amount <= 0) {
     throw new ApiError(400, "Amount must be greater than zero");
   }
@@ -58,7 +80,7 @@ export const POST = apiHandler(async (req: Request) => {
   }
 
   const lastPayment = await prisma.payment.findFirst({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
   });
 
   const nextInvoiceNumber = generateInvoiceNumber(lastPayment?.invoiceNumber);
@@ -79,6 +101,23 @@ export const POST = apiHandler(async (req: Request) => {
     },
   });
 
+  await prisma.auditLog.create({
+    data: {
+      userId: currentUser?.id || null,
+      role: currentUser?.role || null,
+      action: "CREATE",
+      module: "Payment",
+      recordId: payment.id,
+      oldValues: undefined,
+      newValues: payment,
+      ipAddress:
+        req.headers.get("x-forwarded-for") ||
+        req.headers.get("x-real-ip") ||
+        "Unknown",
+      userAgent: req.headers.get("user-agent") || "Unknown",
+    },
+  });
+
   return NextResponse.json(
     new ApiResponse(201, payment, "Payment created successfully")
   );
@@ -89,7 +128,7 @@ export const GET = apiHandler(async (req: Request) => {
   const status = searchParams?.get("status") as PaymentStatus | null;
   const payments = await prisma.payment.findMany({
     where: status ? { status } : undefined,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
     include: {
       student: true,
     },

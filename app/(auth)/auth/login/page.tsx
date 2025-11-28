@@ -1,9 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = false;
-export const fetchCache = "force-no-store";
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,7 +59,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-red-50 via-slate-50 to-sky-50 px-4">
+    <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-red-50 via-slate-50 to-sky-50 px-4">
       <Card className="w-full max-w-md rounded-2xl shadow-md">
         <CardHeader>
           <CardTitle className="text-center text-lg">
