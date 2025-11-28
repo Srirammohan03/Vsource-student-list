@@ -32,7 +32,7 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 
-export const paymentOptions = [
+ const paymentOptions = [
   { value: "online", label: "By Online Payment" },
   { value: "cash", label: "By Cash" },
   { value: "cash-deposit", label: "By Cash-Deposit" },

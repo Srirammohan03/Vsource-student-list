@@ -894,7 +894,7 @@ export default function RegistrationForm({
                     </SelectItem> */}
                         {/* <SelectItem value="K RUCHITHA">K RUCHITHA</SelectItem> */}
                         <SelectItem value="B BHANU SAI PRAKASH">
-                          B BHANU SAI PRAK
+                          B BHANU SAI PRAK</SelectItem>
                           <SelectItem value="MUNEER">MUNEER</SelectItem>
                           <SelectItem value="Y VIJAY">Y VIJAY</SelectItem>
                           <SelectItem value="S PAVAN KRISHNA">
@@ -914,7 +914,6 @@ export default function RegistrationForm({
                             A BHANU SAI RAM
                           </SelectItem>
                           <SelectItem value="U VINAY">U VINAY</SelectItem>
-                        </SelectItem>
                       </SelectContent>
                     </Select>
                   )}

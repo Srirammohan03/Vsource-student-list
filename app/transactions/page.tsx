@@ -38,7 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { paymentOptions } from "../make-payment/[id]/page";
+// import { paymentOptions } from "../make-payment/[id]/page";
 import Image from "next/image";
 import { toWords } from "number-to-words";
 const COMPANY = {
@@ -48,6 +48,17 @@ const COMPANY = {
   gstNo: "36AAKCV9728P1Z8",
   cin: "U85499TS2025PTC197291",
 };
+const paymentOptions = [
+  { value: "online", label: "By Online Payment" },
+  { value: "cash", label: "By Cash" },
+  { value: "cash-deposit", label: "By Cash-Deposit" },
+  { value: "neft", label: "By NEFT" },
+  { value: "card-swipe", label: "By Card Swipe" },
+  { value: "cheque", label: "By Cheque" },
+  { value: "link", label: "By Link" },
+  { value: "cash-swipe", label: "By Cash & Swipe" },
+  { value: "online-cash", label: "By Online & Cash" },
+];
 const splitGST = (state: string | undefined, totalGst: number) => {
   if (!state) return { cgst: "0", sgst: "0", igst: totalGst.toFixed(2) };
   if (state.toUpperCase() === "TELANGANA") {
