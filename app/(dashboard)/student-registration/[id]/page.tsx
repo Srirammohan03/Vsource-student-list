@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios";
 import RegistrationForm from "@/components/student-registration/RegistrationForm";
+import axios from "axios";
 
 export default function EditStudentPage({
   params,
@@ -14,7 +14,9 @@ export default function EditStudentPage({
   const { data, isLoading, isError } = useQuery({
     queryKey: ["student-registration", id],
     queryFn: async () => {
-      const res = await api.get(`/api/student-registration/${id}`);
+      const res = await axios.get(`/api/student-registration/${id}`, {
+        withCredentials: true,
+      });
       const student = res.data.data;
 
       return {

@@ -1,27 +1,31 @@
-import api from "@/lib/axios";
 import {
   AuthResponse,
   LoginStep1Payload,
   LoginStep2Payload,
 } from "@/types/auth";
+import axios from "axios";
 
 export const authService = {
   async loginStep1(payload: LoginStep1Payload) {
-    const res = await api.post("/api/auth/login-step1", payload);
+    const res = await axios.post("/api/auth/login-step1", payload, {
+      withCredentials: true,
+    });
     return res.data;
   },
   async loginStep2(payload: LoginStep2Payload) {
-    const res = await api.post("/api/auth/login-step2", payload);
+    const res = await axios.post("/api/auth/login-step2", payload, {
+      withCredentials: true,
+    });
     return res.data;
   },
   async me(): Promise<{ data: AuthResponse }> {
-    const res = await api.get("/api/auth/me", {
+    const res = await axios.get("/api/auth/me", {
       withCredentials: true,
     });
     return res.data;
   },
   async logout() {
-    await api.post(
+    await axios.post(
       "/api/auth/logout",
       {},
       {
@@ -30,9 +34,17 @@ export const authService = {
     );
   },
   async sendResetToken(employeeId: string) {
-    return await api.post("/api/auth/forgot-password", { employeeId });
+    return await axios.post(
+      "/api/auth/forgot-password",
+      { employeeId },
+      {
+        withCredentials: true,
+      }
+    );
   },
   async resetPassword(payload: { resetToken: string; newPassword: string }) {
-    return api.post("/api/auth/reset-password", payload);
+    return axios.post("/api/auth/reset-password", payload, {
+      withCredentials: true,
+    });
   },
 };

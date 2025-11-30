@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios";
 import { toast } from "@/hooks/use-toast";
+import axios from "axios";
 
 export default function MakePaymentPage() {
   const router = useRouter();
 
   const fetchConfirmedStudents = async () => {
-    const { data } = await api.get(
-      "/api/student-registration?status=CONFIRMED"
+    const { data } = await axios.get(
+      "/api/student-registration?status=CONFIRMED",
+      {
+        withCredentials: true,
+      }
     );
     return data;
   };

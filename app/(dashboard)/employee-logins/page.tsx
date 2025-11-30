@@ -4,11 +4,9 @@ import React, { useMemo, useState } from "react";
 import { LoginLog, getISTDateISO, getISTTodayISO } from "@/types/loginLog";
 import { EmployeeLoginTable } from "@/components/login/EmployeeLoginTable";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios";
+import axios from "axios";
 
 export default function EmployeeLoginPage() {
-  const [collapsed, setCollapsed] = useState(false);
-
   const [search, setSearch] = useState("");
   const [pendingDate, setPendingDate] = useState<string>(() =>
     getISTTodayISO()
@@ -19,7 +17,9 @@ export default function EmployeeLoginPage() {
   const [pageSize, setPageSize] = useState(10);
 
   const getLoginUsers = async () => {
-    const { data } = await api.get("/api/employee-logins");
+    const { data } = await axios.get("/api/employee-logins", {
+      withCredentials: true,
+    });
     return data?.data;
   };
 

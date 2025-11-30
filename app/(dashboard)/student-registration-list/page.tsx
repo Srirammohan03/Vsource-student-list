@@ -23,8 +23,8 @@ import {
 import * as XLSX from "xlsx";
 import { Pencil, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 
 // (optional) util if you still want static year options somewhere else
 // but here we’ll derive years from data itself.
@@ -44,7 +44,9 @@ export default function StudentRegistrationList() {
   const [status, setStatus] = useState("ALL");
 
   const fetchStudents = async () => {
-    const res = await api.get("/api/student-registration");
+    const res = await axios.get("/api/student-registration", {
+      withCredentials: true,
+    });
     return res.data.data || [];
   };
   const {
@@ -57,7 +59,10 @@ export default function StudentRegistrationList() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/api/student-registration/${id}`),
+    mutationFn: (id: string) =>
+      axios.delete(`/api/student-registration/${id}`, {
+        withCredentials: true,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-registrations"] });
     },

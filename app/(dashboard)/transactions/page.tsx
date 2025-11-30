@@ -25,7 +25,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import api from "@/lib/axios";
 import * as XLSX from "xlsx";
 import { FileDown, Loader2, Scroll, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import axios from "axios";
 // import { paymentOptions } from "../make-payment/[id]/page";
 
 const paymentOptions = [
@@ -91,7 +91,9 @@ export default function TransactionsPage() {
 
   // Fetch payments
   const fetchPayments = async () => {
-    const res = await api.get(`/api/payment?status=APPROVED`);
+    const res = await axios.get(`/api/payment?status=APPROVED`, {
+      withCredentials: true,
+    });
     return res.data.data;
   };
 
@@ -149,9 +151,12 @@ export default function TransactionsPage() {
 
   const updatePaymentMutation = useMutation({
     mutationFn: async (updatedData: any) => {
-      const res = await api.patch(
+      const res = await axios.patch(
         `/api/payment/${updatedData.id}`,
-        updatedData
+        updatedData,
+        {
+          withCredentials: true,
+        }
       );
       return res.data;
     },

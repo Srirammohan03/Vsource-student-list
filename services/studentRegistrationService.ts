@@ -1,18 +1,28 @@
-import api from "@/lib/axios";
+import axios from "axios";
 
 export const studentRegistrationService = {
-    create: (data: any) =>
-        api.post("/api/student-registration", data),
+  create: (data: any) =>
+    axios.post("/api/student-registration", data, {
+      withCredentials: true,
+    }),
 
-    list: () =>
-        api.get("/api/student-registration"),
+  list: () =>
+    axios.get("/api/student-registration", {
+      withCredentials: true,
+    }),
 
-    getById: (id: string) =>
-        api.get(`/api/student-registration/${id}`),
+  getById: (id: string) =>
+    axios.get(`/api/student-registration/${id}`, {
+      withCredentials: true,
+    }),
 
-    update: (id: string, data: any) =>
-        api.put(`/api/student-registration/${id}`, data),
+  update: (id: string, data: any) =>
+    axios.put(`/api/student-registration/${id}`, data, {
+      withCredentials: true,
+    }),
 
-    delete: (id: string) =>
-        api.delete(`/api/student-registration/${id}`),
+  delete: (id: string) =>
+    axios.delete(`/api/student-registration/${id}`, {
+      withCredentials: true,
+    }),
 };

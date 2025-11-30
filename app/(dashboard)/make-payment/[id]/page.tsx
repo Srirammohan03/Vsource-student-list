@@ -28,7 +28,7 @@ import {
 } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import api from "@/lib/axios";
+import axios from "axios";
 
 export const paymentOptions = [
   { value: "online", label: "By Online Payment" },
@@ -65,7 +65,9 @@ export default function PaymentFormPage() {
   ].includes(paymentMethod || "");
 
   const fetchStudent = async () => {
-    const res = await api.get(`/api/student-registration/${id}`);
+    const res = await axios.get(`/api/student-registration/${id}`, {
+      withCredentials: true,
+    });
     return res.data;
   };
 
@@ -109,7 +111,9 @@ export default function PaymentFormPage() {
   }, [isStudentError, studentError]);
 
   const fetchPayments = async () => {
-    const { data } = await api.get(`/api/payment/${id}`);
+    const { data } = await axios.get(`/api/payment/${id}`, {
+      withCredentials: true,
+    });
     return data?.data;
   };
 
@@ -147,7 +151,9 @@ export default function PaymentFormPage() {
         gst: gstPercent ? Number(gstPercent) : undefined,
         gstAmount: gstAmount ? Number(gstAmount) : undefined,
       };
-      const res = await api.post("/api/payment", payload);
+      const res = await axios.post("/api/payment", payload, {
+        withCredentials: true,
+      });
       return res.data.data;
     },
     onSuccess: () => {
