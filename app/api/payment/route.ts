@@ -147,16 +147,60 @@ export const POST = apiHandler(async (req: Request) => {
 export const GET = apiHandler(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const status = searchParams?.get("status") as PaymentStatus | null;
+
+  const token = cookies().get("token")?.value;
+  if (!token) throw new ApiError(401, "Not authenticated");
+
+  let decoded: any;
+  let currentUser: any;
+
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    currentUser = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { id: true, role: true },
+    });
+
+    if (!currentUser) throw new ApiError(401, "User not found");
+  } catch (error) {
+    throw new ApiError(401, "Invalid or expired token");
+  }
+
+  // 🔍 Dynamic filters
+  let filters: any = {};
+  if (status) filters.status = status;
+
+  // 🔐 Role-based visibility control
+  if (currentUser.role !== "Admin" && currentUser.role !== "Accountant") {
+    filters.student = { createdBy: currentUser.id };
+  }
+
   const payments = await prisma.payment.findMany({
-    where: status ? { status } : undefined,
+    where: filters,
     orderBy: { createdAt: "asc" },
     include: {
-      student: true,
+      student: {
+        select: {
+          id: true,
+          stid: true,
+          studentName: true,
+          mobileNumber: true,
+          email: true,
+          assigneeName: true,
+          counselorName: true,
+          processedBy: true,
+          officeCity: true,
+          createdBy: true,
+        },
+      },
     },
   });
-  if (!payments) throw new ApiError(404, "No payments found");
+  let message;
+  if (!payments.length) {
+    message = "No payments found";
+  } else {
+    message = "payment fetched successfully";
+  }
 
-  return NextResponse.json(
-    new ApiResponse(200, payments, "payment fetched successfully")
-  );
+  return NextResponse.json(new ApiResponse(200, payments, message));
 });
