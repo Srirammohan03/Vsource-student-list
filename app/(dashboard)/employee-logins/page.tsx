@@ -46,12 +46,18 @@ export default function EmployeeLoginPage() {
     const term = search.toLowerCase();
 
     return byDate.filter((log) => {
+      const id = log?.user?.employeeId?.toLowerCase() || "";
+      const name = log?.user?.name?.toLowerCase() || "";
+      const email = log?.user?.email?.toLowerCase() || "";
+      const role = log?.user?.role?.toLowerCase() || "";
+      const loginType = log?.user?.loginType?.toLowerCase() || "";
+
       return (
-        log?.user?.employeeId.toLowerCase().includes(term) ||
-        log?.user?.name.toLowerCase().includes(term) ||
-        log?.user?.email.toLowerCase().includes(term) ||
-        log?.user?.role.toLowerCase().includes(term) ||
-        log?.user?.loginType.toLowerCase().includes(term)
+        id.includes(term) ||
+        name.includes(term) ||
+        email.includes(term) ||
+        role.includes(term) ||
+        loginType.includes(term)
       );
     });
   }, [logs, activeDate, search]);
@@ -119,7 +125,7 @@ export default function EmployeeLoginPage() {
         </div>
 
         <EmployeeLoginTable
-          items={logs}
+          items={paginated}
           loading={isLoading}
           page={page}
           pageSize={pageSize}
