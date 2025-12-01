@@ -14,6 +14,7 @@ export const GET = apiHandler(async (req: Request) => {
   const students = await prisma.studentRegistration.findMany({
     where: status ? { status } : undefined,
     orderBy: { createdAt: "asc" },
+    include: { payment: true },
   });
 
   return NextResponse.json(

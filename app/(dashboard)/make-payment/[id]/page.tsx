@@ -64,11 +64,11 @@ export default function PaymentFormPage() {
     "online-cash",
   ].includes(paymentMethod || "");
 
-  const fetchStudent = async () => {
-    const res = await axios.get(`/api/student-registration/${id}`, {
+  const fetchStudent = async (id: string) => {
+    const { data } = await axios.get(`/api/student-registration/${id}`, {
       withCredentials: true,
     });
-    return res.data;
+    return data?.data;
   };
 
   const {
@@ -78,8 +78,9 @@ export default function PaymentFormPage() {
     error: studentError,
   } = useQuery({
     queryKey: ["student", id],
-    queryFn: fetchStudent,
+    queryFn: ({ queryKey }) => fetchStudent(queryKey[1] as string),
     placeholderData: keepPreviousData,
+    enabled: !!id,
   });
 
   useEffect(() => {
@@ -109,34 +110,6 @@ export default function PaymentFormPage() {
       });
     }
   }, [isStudentError, studentError]);
-
-  const fetchPayments = async () => {
-    const { data } = await axios.get(`/api/payment/${id}`, {
-      withCredentials: true,
-    });
-    return data?.data;
-  };
-
-  const {
-    data: history,
-    isLoading: isHistoryLoading,
-    isError: isHistoryError,
-    error: historyError,
-  } = useQuery({
-    queryKey: ["payments", id],
-    queryFn: fetchPayments,
-    placeholderData: keepPreviousData,
-  });
-
-  useEffect(() => {
-    if (isHistoryError) {
-      toast({
-        title: "Failed to load payment history",
-        description: historyError?.message || "Unable to fetch records",
-        variant: "destructive",
-      });
-    }
-  }, [isHistoryError, historyError]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -184,15 +157,14 @@ export default function PaymentFormPage() {
             <div className="space-y-3 bg-slate-50/60 p-4 rounded-lg">
               <p className="text-sm">
                 <span className="font-medium">Student:</span>{" "}
-                {student?.data?.studentName}
+                {student?.studentName}
               </p>
               <p className="text-sm">
-                <span className="font-medium">Email:</span>{" "}
-                {student?.data?.email}
+                <span className="font-medium">Email:</span> {student?.email}
               </p>
               <p className="text-sm">
                 <span className="font-medium">Service Fee:</span>{" "}
-                {student?.data?.serviceCharge}
+                {student?.serviceCharge}
               </p>
             </div>
             <div className="space-y-4">
@@ -274,7 +246,7 @@ export default function PaymentFormPage() {
               )}
               <Button
                 className="w-full h-9 mt-3"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || student?.payment !== null}
                 onClick={() => mutation.mutate()}
               >
                 {mutation.isPending ? (
@@ -291,9 +263,9 @@ export default function PaymentFormPage() {
       </div>
       <div className="rounded-xl bg-white p-6 shadow-md">
         <h2 className="text-lg font-semibold mb-4">Payment History</h2>
-        {isHistoryLoading ? (
+        {isStudentLoading ? (
           <Skeleton className="h-40 w-full" />
-        ) : !history ? (
+        ) : !student?.payment ? (
           <p>No Payment history found</p>
         ) : (
           <Table>
@@ -307,23 +279,25 @@ export default function PaymentFormPage() {
                 <TableHead>Type of Payment</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Invoice</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Payment Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
                 <TableCell>{1}</TableCell>
-                <TableCell>{history?.student?.studentName}</TableCell>
-                <TableCell>{history?.feeType.toUpperCase()}</TableCell>
-                <TableCell>{history?.subFeeType || "N/A"}</TableCell>
-                <TableCell>{history?.amount}</TableCell>
-                <TableCell>{history?.paymentMethod}</TableCell>
-                <TableCell>{history?.invoiceNumber}</TableCell>
+                <TableCell>{student?.studentName}</TableCell>
                 <TableCell>
-                  {new Date(history?.date).toLocaleDateString()}
+                  {student?.payment?.feeType?.toUpperCase()}
+                </TableCell>
+                <TableCell>{student?.payment?.subFeeType || "N/A"}</TableCell>
+                <TableCell>{student?.payment?.amount}</TableCell>
+                <TableCell>{student?.payment?.paymentMethod}</TableCell>
+                <TableCell>{student?.payment?.invoiceNumber}</TableCell>
+                <TableCell>
+                  {new Date(student?.payment?.date).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-green-600">
-                  {history?.status}
+                  {student?.payment?.status}
                 </TableCell>
               </TableRow>
             </TableBody>

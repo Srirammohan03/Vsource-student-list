@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { stateDistricts } from "@/lib/stateDistricts";
+import { toast } from "sonner";
 
 interface RegistrationFormProps {
   mode?: "create" | "edit";
@@ -34,7 +35,6 @@ interface RegistrationFormProps {
 
 type FormData = StudentRegistrationForm;
 
-// Generate real academic years like SPRING-2025, SUMMER-2025, FALL-2025, etc.
 function generateAcademicYearOptions(): string[] {
   const currentYear = new Date().getFullYear();
   const terms = ["SPRING", "SUMMER", "FALL"] as const;
@@ -89,7 +89,6 @@ export default function RegistrationForm({
   useEffect(() => {
     if (editStudent && mode === "edit") {
       Object.keys(editStudent).forEach((key) => {
-        // only set values that exist in form schema
         if (editStudent[key] !== undefined) {
           setValue(key as any, editStudent[key]);
         }
@@ -100,18 +99,14 @@ export default function RegistrationForm({
     mutationFn: (payload: FormData) =>
       studentRegistrationService.create(payload).then((res) => res.data),
     onSuccess: (created) => {
-      alert("Student Registered Successfully");
+      toast.success("Student Registered Successfully");
 
-      // 🔹 Update list cache immediately (append new record)
       queryClient.setQueryData<any[]>(["student-registrations"], (old) => {
         if (!old) return [created];
         return [...old, created];
       });
 
-      // Also mark query stale (will refetch if you ever want)
       queryClient.invalidateQueries({ queryKey: ["student-registrations"] });
-
-      setValue("registrationDate", todayStr);
     },
 
     onError: (err: any) => {
@@ -124,9 +119,8 @@ export default function RegistrationForm({
       studentRegistrationService.update(id, payload).then((res) => res.data),
 
     onSuccess: (updated) => {
-      alert("Student updated successfully");
+      toast.success("Student updated Successfully");
 
-      // Update cache
       queryClient.setQueryData<any[]>(["student-registrations"], (old) => {
         if (!old) return old;
         return old.map((item) => (item.id === updated.id ? updated : item));
@@ -134,16 +128,21 @@ export default function RegistrationForm({
 
       queryClient.setQueryData(["student-registration", id], updated);
 
-      // Mark query stale
-      queryClient.invalidateQueries({ queryKey: ["student-registrations"] });
+      // queryClient.invalidateQueries({ queryKey: ["student-registrations"] });
 
-      // 🔥 FORCE PAGE RE-RENDER
-      router.refresh();
+      Object.keys(updated).forEach((key) => {
+        if (updated[key] !== undefined) {
+          setValue(key as any, updated[key]);
+        }
+      });
 
-      // Then navigate
       router.push("/student-registration-list");
     },
   });
+
+  if (editLoading) {
+    return <div>Loading...</div>;
+  }
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
@@ -343,7 +342,11 @@ export default function RegistrationForm({
             <div className="mt-6 grid md:grid-cols-3 gap-5">
               <div>
                 <Label>Registration Date</Label>
-                <Input type="date" readOnly {...register("registrationDate")} />
+                <Input
+                  type="date"
+                  max={todayStr}
+                  {...register("registrationDate")}
+                />
                 {errors.registrationDate && (
                   <p className="text-red-500 text-sm">
                     {errors.registrationDate.message}

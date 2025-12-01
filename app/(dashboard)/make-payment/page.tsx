@@ -65,33 +65,35 @@ export default function MakePaymentPage() {
             )}
 
             {!isLoading &&
-              students?.data?.map((item: any, index: number) => (
-                <tr
-                  key={item.id}
-                  className="border-b hover:bg-slate-50 transition"
-                >
-                  <td className="p-3 border">{index + 1}</td>
-                  <td className="p-3 border">{item.studentName}</td>
-                  <td className="p-3 border">{item.mobileNumber}</td>
-                  <td className="p-3 border">{item.email}</td>
-                  <td className="p-3 border">{item.abroadMasters}</td>
-                  <td className="p-3 border">{item.serviceCharge}</td>
+              students?.data?.map((item: any, index: number) => {
+                return (
+                  <tr
+                    key={item?.id}
+                    className="border-b hover:bg-slate-50 transition"
+                  >
+                    <td className="p-3 border">{index + 1}</td>
+                    <td className="p-3 border">{item?.studentName}</td>
+                    <td className="p-3 border">{item?.mobileNumber}</td>
+                    <td className="p-3 border">{item?.email}</td>
+                    <td className="p-3 border">{item?.abroadMasters}</td>
+                    <td className="p-3 border">{item?.serviceCharge}</td>
 
-                  <td className="p-3 border text-center">
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => router.push(`/make-payment/${item.id}`)}
-                    >
-                      +
-                    </Button>
-                  </td>
+                    <td className="p-3 border text-center">
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => router.push(`/make-payment/${item?.id}`)}
+                      >
+                        +
+                      </Button>
+                    </td>
 
-                  <td className="p-3 border text-green-600 font-semibold">
-                    {item.status}
-                  </td>
-                </tr>
-              ))}
+                    <td className="p-3 border text-green-600 font-semibold">
+                      {item.status}
+                    </td>
+                  </tr>
+                );
+              })}
 
             {!isLoading && students.data.length === 0 && (
               <tr>
