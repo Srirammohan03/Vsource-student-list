@@ -7,6 +7,9 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "VSource Education Admin",
   description: "Student registration & invoicing system for VSource Education",
+    icons: {
+    icon: "/assets/logo-small.png",
+  },
 };
 
 export default function RootLayout({
