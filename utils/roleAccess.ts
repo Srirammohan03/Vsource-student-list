@@ -5,6 +5,7 @@ export const roleAccess: Record<string, string[]> = {
     "/student-registration-list",
     "/make-payment",
     "/transactions",
+    "/invoice",
   ],
-  Accounts: ["/dashboard", "/transactions"],
+  Accounts: ["/dashboard", "/transactions", "/invoice"],
 };
