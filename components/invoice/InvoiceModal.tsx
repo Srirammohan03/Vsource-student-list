@@ -1,7 +1,5 @@
 import { useRef } from "react";
 import { Button } from "../ui/button";
-import Image from "next/image";
-import { toWords } from "number-to-words";
 
 const COMPANY = {
   name: "VSOURCE VARSITY PRIVATE LIMITED",
