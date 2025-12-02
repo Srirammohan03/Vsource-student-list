@@ -50,7 +50,7 @@ export default function PaymentFormPage() {
   const [feeType, setFeeType] = useState<string>();
   const [paymentMethod, setPaymentMethod] = useState<string>();
   const [bankDetails, setBankDetails] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(0);
   const [referenceNo, setReferenceNo] = useState("");
   const [gstPercent, setGstPercent] = useState(0);
   const [gstAmount, setGstAmount] = useState(0);
@@ -84,7 +84,7 @@ export default function PaymentFormPage() {
   useEffect(() => {
     if (feeType === "service-fee") {
       const base = Number(amount) || 0;
-      const gst = 18; // FIXED 18%
+      const gst = 18;
 
       setGstPercent(gst);
 
@@ -201,30 +201,12 @@ export default function PaymentFormPage() {
               </Select>
 
               <Input
+                type="number"
                 className="h-9"
                 placeholder="Enter Amount"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
               />
-              {/* {feeType === "service-fee" && (
-                <>
-                  <div className="border p-3 rounded-lg bg-slate-50 text-sm">
-                    <p className="font-medium">GST (18%): {gstAmount}</p>
-                    <p className="font-medium">
-                      Total with GST: {Number(amount) + gstAmount || 0}
-                    </p>
-                  </div>
-
-                  <p className="text-sm font-medium text-right">
-                    Total with GST:{" "}
-                    {amount && gstAmount
-                      ? (Number(amount) + Number(gstAmount)).toLocaleString(
-                          "en-IN"
-                        )
-                      : "--"}
-                  </p>
-                </>
-              )} */}
               {needsReferenceNo && (
                 <Input
                   className="h-9"

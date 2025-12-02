@@ -142,7 +142,7 @@ export default function LoginPage() {
             <form className="space-y-3" onSubmit={handleStep1}>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
-                  Email
+                  Login
                 </label>
                 <Input
                   type="email"

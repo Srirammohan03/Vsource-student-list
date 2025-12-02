@@ -16,10 +16,8 @@ import {
 
 export default function EmployeeLoginPage() {
   const [search, setSearch] = useState("");
-  const [pendingDate, setPendingDate] = useState<string>(() =>
-    getISTTodayISO()
-  );
   const [activeDate, setActiveDate] = useState<string>(() => getISTTodayISO());
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -43,28 +41,39 @@ export default function EmployeeLoginPage() {
   });
 
   const filtered = useMemo(() => {
-    const byDate = logs.filter((log) => {
+    let result = logs.filter((log) => {
       if (!activeDate) return true;
       const logDateISO = getISTDateISO(log?.loginTime);
       return logDateISO === activeDate;
     });
-    if (!search.trim()) return byDate;
-    const term = search.toLowerCase();
-    return byDate.filter((log) => {
-      const id = log?.user?.employeeId?.toLowerCase() || "";
-      const name = log?.user?.name?.toLowerCase() || "";
-      const email = log?.user?.email?.toLowerCase() || "";
-      const role = log?.user?.role?.toLowerCase() || "";
-      const loginType = log?.user?.loginType?.toLowerCase() || "";
-      return (
-        id.includes(term) ||
-        name.includes(term) ||
-        email.includes(term) ||
-        role.includes(term) ||
-        loginType.includes(term)
-      );
+
+    if (search.trim()) {
+      const term = search.toLowerCase();
+      result = result.filter((log) => {
+        const id = log?.user?.employeeId?.toLowerCase() || "";
+        const name = log?.user?.name?.toLowerCase() || "";
+        const email = log?.user?.email?.toLowerCase() || "";
+        const role = log?.user?.role?.toLowerCase() || "";
+        const loginType = log?.user?.loginType?.toLowerCase() || "";
+        return (
+          id.includes(term) ||
+          name.includes(term) ||
+          email.includes(term) ||
+          role.includes(term) ||
+          loginType.includes(term)
+        );
+      });
+    }
+
+    // 🔥 Apply Sort
+    result = result.sort((a, b) => {
+      const t1 = new Date(a.loginTime).getTime();
+      const t2 = new Date(b.loginTime).getTime();
+      return sortOrder === "newest" ? t2 - t1 : t1 - t2;
     });
-  }, [logs, activeDate, search]);
+
+    return result;
+  }, [logs, activeDate, search, sortOrder]);
 
   const paginated = useMemo(() => {
     const start = page * pageSize;
@@ -72,11 +81,6 @@ export default function EmployeeLoginPage() {
   }, [filtered, page, pageSize]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
-
-  const handleSubmitDate = () => {
-    setActiveDate(pendingDate);
-    setPage(0);
-  };
 
   const todayDisplay = useMemo(() => {
     const [y, m, d] = activeDate.split("-");
@@ -104,18 +108,14 @@ export default function EmployeeLoginPage() {
               <label className="text-xs mb-1 font-medium">Date</label>
               <input
                 type="date"
-                value={pendingDate}
-                onChange={(e) => setPendingDate(e.target.value)}
+                value={activeDate}
+                onChange={(e) => {
+                  setActiveDate(e.target.value);
+                  setPage(0);
+                }}
                 className="rounded-lg border shadow-sm px-3 py-2 w-full sm:w-48"
               />
             </div>
-
-            <Button
-              onClick={handleSubmitDate}
-              className="bg-red-600 text-white w-full sm:w-auto"
-            >
-              Submit
-            </Button>
 
             <div className="flex flex-col text-sm w-full sm:w-auto">
               <label className="text-xs mb-1 font-medium">Search</label>
@@ -126,6 +126,21 @@ export default function EmployeeLoginPage() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="rounded-lg border shadow-sm px-3 py-2 w-full sm:w-64"
               />
+            </div>
+            <div className="flex flex-col text-sm w-full sm:w-auto">
+              <label className="text-xs mb-1 font-medium">Sort By</label>
+              <Select
+                value={sortOrder}
+                onValueChange={(v: "newest" | "oldest") => setSortOrder(v)}
+              >
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest to Oldest</SelectItem>
+                  <SelectItem value="oldest">Oldest to Newest</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
