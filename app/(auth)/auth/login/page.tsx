@@ -22,6 +22,7 @@ export default function LoginPage() {
 
   const [employeeName, setEmployeeName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -122,6 +123,22 @@ export default function LoginPage() {
     }
   };
 
+  const validatePassword = (password: string) => {
+    const minLength = /.{8,}/;
+    // const upper = /[A-Z]/;
+    const lower = /[a-z]/;
+    const number = /[0-9]/;
+    const special = /[!@#$%^&*(),.?":{}|<>]/;
+
+    return (
+      minLength.test(password) &&
+      // upper.test(password) &&
+      lower.test(password) &&
+      number.test(password) &&
+      special.test(password)
+    );
+  };
+
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-red-50 via-slate-50 to-sky-50 px-4">
       {/* -------- LOGO -------- */}
@@ -192,13 +209,21 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     required
                     value={form1.password}
-                    onChange={(e) =>
-                      setForm1((f) => ({ ...f, password: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setForm1((f) => ({ ...f, password: value }));
+
+                      if (!validatePassword(value)) {
+                        setPasswordError(
+                          "Password must contain 8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special character"
+                        );
+                      } else {
+                        setPasswordError(null);
+                      }
+                    }}
                     className="pr-10"
                     placeholder="Enter the password"
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
@@ -211,9 +236,16 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
+                {passwordError && (
+                  <p className="text-xs text-red-500 mt-1">{passwordError}</p>
+                )}
               </div>
 
-              <Button className="mt-2 w-full" disabled={loading} type="submit">
+              <Button
+                className="mt-2 w-full"
+                disabled={loading || !!passwordError}
+                type="submit"
+              >
                 {loading ? "Verifying..." : "Continue"}
               </Button>
             </form>
@@ -248,7 +280,11 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button className="mt-2 w-full" disabled={loading} type="submit">
+              <Button
+                className="mt-2 w-full"
+                disabled={loading || !employeeName}
+                type="submit"
+              >
                 {loading ? "Signing in..." : "Login"}
               </Button>
 

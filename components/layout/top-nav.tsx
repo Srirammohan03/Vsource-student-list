@@ -64,10 +64,10 @@ export function TopNav({ onToggleSidebar }: TopNavProps) {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user?.name || "Admin User"}
+                    {user?.name || "N/A"}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email || "admin@example.com"}
+                    {user?.email || "N/A"}
                   </p>
                 </div>
               </DropdownMenuLabel>
