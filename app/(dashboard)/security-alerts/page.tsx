@@ -20,13 +20,15 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { ShieldAlert, Search, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { User } from "@/types/loginLog";
+import { toast } from "sonner";
+import Error from "next/error";
 
 export default function SecurityAlertPage() {
   const [search, setSearch] = useState("");
-
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["security-alerts"],
     queryFn: async () => {
@@ -36,6 +38,24 @@ export default function SecurityAlertPage() {
       return data;
     },
     staleTime: 0,
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data } = await axios.patch(
+        `/api/users/unlock/${userId}`,
+        {},
+        { withCredentials: true }
+      );
+      return data;
+    },
+    onSuccess: async (data) => {
+      toast.success(data?.message ?? "User unlocked successfully");
+      queryClient.invalidateQueries({ queryKey: ["security-alerts"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Failed to unlock user");
+    },
   });
 
   if (isError)
@@ -59,7 +79,9 @@ export default function SecurityAlertPage() {
       u?.email?.toLowerCase()?.includes(search?.toLowerCase())
   );
 
-  const handleResetLocked = async (id: string) => {};
+  const handleResetLocked = async (id: string) => {
+    mutate(id);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -101,7 +123,6 @@ export default function SecurityAlertPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Attempts</TableHead>
-                  <TableHead>Locked At</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -123,13 +144,20 @@ export default function SecurityAlertPage() {
                       <TableCell className="font-medium">{u?.name}</TableCell>
                       <TableCell>{u?.email}</TableCell>
                       <TableCell>{u?.failedAttempts}</TableCell>
-                      <TableCell>{u?.lockUntil || "—"}</TableCell>
                       <TableCell>
                         <Badge variant="destructive">Locked</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button className="bg-green-600 hover:bg-green-700">
-                          Allow Login
+                        <Button
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleResetLocked(u?.id)}
+                          disabled={isPending}
+                        >
+                          {isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Allow Login"
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>

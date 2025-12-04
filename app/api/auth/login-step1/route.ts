@@ -2,11 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
 import { ApiResponse } from "@/utils/ApiResponse";
-import {
-  checkLockOut,
-  handleFailedAttempt,
-  resetAttempts,
-} from "@/utils/checkLockout";
+import { checkLockOut, handleFailedAttempt } from "@/utils/checkLockout";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
@@ -23,36 +19,31 @@ export const POST = apiHandler(async (req: Request) => {
   });
 
   if (!user) {
-    throw new ApiError(401, "Invalid email or password");
+    return NextResponse.json(
+      new ApiResponse(401, null, "Invalid email or password"),
+      { status: 401 }
+    );
   }
 
-  const { locked, message, redirect, lockUntil } = await checkLockOut(user);
+  const { locked, message, redirect } = await checkLockOut(user);
 
   if (locked)
     return NextResponse.json(
-      new ApiResponse(403, { redirect: redirect, locked, lockUntil }, message),
+      new ApiResponse(403, { redirect: redirect, locked }, message),
       { status: 403 }
     );
 
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    const { locked, message, redirect, lockUntil } = await handleFailedAttempt(
-      user
-    );
+    const { locked, message, redirect } = await handleFailedAttempt(user);
     if (locked)
       return NextResponse.json(
-        new ApiResponse(
-          403,
-          { redirect: redirect, lockUntil, locked },
-          message
-        ),
+        new ApiResponse(403, { redirect: redirect, locked }, message),
         { status: 403 }
       );
     throw new ApiError(401, "Invalid email or password");
   }
-
-  await resetAttempts(user?.id);
 
   const tempToken = jwt.sign({ email }, process.env.JWT_SECRET!);
 

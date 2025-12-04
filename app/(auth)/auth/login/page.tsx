@@ -27,15 +27,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     const lockEmail = localStorage.getItem("lockEmail");
-    const lockUntil = localStorage.getItem("lockUntil");
 
-    if (!lockEmail || !lockUntil) return;
+    if (!lockEmail) return;
 
-    if (new Date(lockUntil) > new Date()) {
+    if (lockEmail) {
       router.replace("/account-locked");
     } else {
       localStorage.removeItem("lockEmail");
-      localStorage.removeItem("lockUntil");
     }
   }, []);
 
@@ -50,13 +48,9 @@ export default function LoginPage() {
       toast.success(res?.data?.message || "Successfully completed step 1");
       setStep(2);
       localStorage.removeItem("lockEmail");
-      localStorage.removeItem("lockUntil");
     } catch (err: any) {
       if (err.response?.data?.data?.redirect) {
-        const lockUntil = err.response.data.data.lockUntil;
-
         localStorage.setItem("lockEmail", form1.email);
-        localStorage.setItem("lockUntil", lockUntil);
 
         router.push("/account-locked");
         return;
@@ -112,14 +106,11 @@ export default function LoginPage() {
 
       toast.success(res?.data?.message || "Logged in Successfully");
       localStorage.removeItem("lockEmail");
-      localStorage.removeItem("lockUntil");
       router.push(redirectMap[role] || "/dashboard");
     } catch (err: any) {
       console.log(err);
       if (err.response?.data?.data?.redirect) {
-        const lockUntil = err.response.data.data.lockUntil;
         localStorage.setItem("lockEmail", form1.email);
-        localStorage.setItem("lockUntil", lockUntil);
 
         router.push(err.response.data.data.redirect);
         return;

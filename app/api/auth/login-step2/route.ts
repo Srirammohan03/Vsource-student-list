@@ -36,15 +36,13 @@ export const POST = apiHandler(async (req: Request) => {
     });
 
     if (userByEmail) {
-      const { locked, message, lockUntil } = await handleFailedAttempt(
-        userByEmail
-      );
+      const { locked, message } = await handleFailedAttempt(userByEmail);
 
       if (locked)
         return NextResponse.json(
           new ApiResponse(
             403,
-            { redirect: "/account-locked", lockUntil, locked },
+            { redirect: "/account-locked", locked },
             message
           ),
           { status: 403 }

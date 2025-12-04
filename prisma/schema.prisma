@@ -22,9 +22,8 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  failedAttempts Int       @default(0)
-  isLocked       Boolean   @default(false)
-  lockUntil      DateTime?
+  failedAttempts Int     @default(0)
+  isLocked       Boolean @default(false)
 
   employeeLoginDetails EmployeeLoginDetail[]
   auditLog             AuditLog[]
