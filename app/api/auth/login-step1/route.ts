@@ -25,23 +25,21 @@ export const POST = apiHandler(async (req: Request) => {
     );
   }
 
-  const { locked, message, redirect } = await checkLockOut(user);
+  const { locked, message } = await checkLockOut(user);
 
   if (locked)
-    return NextResponse.json(
-      new ApiResponse(403, { redirect: redirect, locked }, message),
-      { status: 403 }
-    );
+    return NextResponse.json(new ApiResponse(403, { locked }, message), {
+      status: 403,
+    });
 
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    const { locked, message, redirect } = await handleFailedAttempt(user);
+    const { locked, message } = await handleFailedAttempt(user);
     if (locked)
-      return NextResponse.json(
-        new ApiResponse(403, { redirect: redirect, locked }, message),
-        { status: 403 }
-      );
+      return NextResponse.json(new ApiResponse(403, { locked }, message), {
+        status: 403,
+      });
     throw new ApiError(401, "Invalid email or password");
   }
 

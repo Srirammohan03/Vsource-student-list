@@ -42,14 +42,9 @@ export const POST = apiHandler(async (req: Request) => {
       const { locked, message } = await handleFailedAttempt(userByEmail);
 
       if (locked)
-        return NextResponse.json(
-          new ApiResponse(
-            403,
-            { redirect: "/account-locked", locked },
-            message
-          ),
-          { status: 403 }
-        );
+        return NextResponse.json(new ApiResponse(403, { locked }, message), {
+          status: 403,
+        });
       throw new ApiError(401, `Employee ID does not match.`);
     }
 
@@ -59,10 +54,9 @@ export const POST = apiHandler(async (req: Request) => {
   const { locked, message } = await checkLockOut(user);
 
   if (locked)
-    return NextResponse.json(
-      new ApiResponse(403, { redirect: "/account-locked", locked }, message),
-      { status: 403 }
-    );
+    return NextResponse.json(new ApiResponse(403, { locked }, message), {
+      status: 403,
+    });
 
   await resetAttempts(user.id);
 

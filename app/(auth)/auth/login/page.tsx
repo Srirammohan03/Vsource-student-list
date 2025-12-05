@@ -26,31 +26,6 @@ export default function LoginPage() {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const lockEmail = localStorage.getItem("lockEmail");
-    if (!lockEmail) return;
-
-    const checkStatus = async () => {
-      try {
-        const res = await authService.checkLockout(lockEmail);
-
-        if (res?.data?.data?.locked === true) {
-          router.replace("/account-locked");
-          return;
-        }
-
-        localStorage.removeItem("lockEmail");
-        router.replace("/auth/login");
-      } catch (err) {
-        toast.error(
-          "Unable to verify your account status. Please check your connection and try again."
-        );
-      }
-    };
-
-    checkStatus();
-  }, [router]);
-
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -58,17 +33,23 @@ export default function LoginPage() {
 
     try {
       const res = await authService.loginStep1(form1);
-      setTempToken(res?.data?.tempToken);
-      toast.success(res?.data?.message || "Successfully completed step 1");
-      setStep(2);
-      localStorage.removeItem("lockEmail");
-    } catch (err: any) {
-      const apiData = err.response?.data;
-      if (apiData?.data?.locked === true) {
-        localStorage.setItem("lockEmail", form1.email);
+
+      if (res?.data?.data?.locked === true) {
         router.replace("/account-locked");
         return;
       }
+
+      setTempToken(res?.data?.tempToken);
+      toast.success(res?.data?.message || "Successfully completed step 1");
+      setStep(2);
+    } catch (err: any) {
+      const apiData = err.response?.data;
+
+      if (apiData?.data?.locked === true) {
+        router.replace("/account-locked");
+        return;
+      }
+
       setError(apiData?.message || "Invalid credentials");
     } finally {
       setLoading(false);
@@ -107,6 +88,11 @@ export default function LoginPage() {
         tempToken,
       });
 
+      if (res?.data?.data?.locked === true) {
+        router.replace("/account-locked");
+        return;
+      }
+
       document.cookie = `token=${res.data.finalToken}; path=/;`;
 
       const meRes = await authService.me();
@@ -124,10 +110,10 @@ export default function LoginPage() {
     } catch (err: any) {
       const apiData = err.response?.data;
       if (apiData?.data?.locked === true) {
-        localStorage.setItem("lockEmail", form1.email);
         router.replace("/account-locked");
         return;
       }
+
       toast.error(apiData?.message || "Attempt Failed");
       setError(apiData?.message || "Invalid credentials");
     } finally {

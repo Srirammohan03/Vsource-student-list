@@ -1,46 +1,44 @@
 import { prisma } from "@/lib/prisma";
 
 export const checkLockOut = async (user: any) => {
-  if (user?.isLocked) {
-    if (user?.failedAttempts === 5) {
-      return {
-        locked: true,
-        message: `Account locked`,
-        redirect: "/account-locked",
-      };
-    }
+  if (user?.isLocked === true) {
+    return {
+      locked: true,
+      message: "Account is locked",
+    };
   }
 
   return { locked: false };
 };
 
 export async function handleFailedAttempt(user: any) {
-  const attempts = user?.failedAttempts + 1;
+  const nextAttempts = (user?.failedAttempts || 0) + 1;
 
-  if (attempts >= 5) {
+  if (nextAttempts >= 5) {
     await prisma.user.update({
-      where: { id: user?.id },
+      where: { id: user.id },
       data: {
         isLocked: true,
-        failedAttempts: attempts,
+        failedAttempts: 5,
       },
     });
 
     return {
       locked: true,
-      message: `Too many failed attempts. Account locked .`,
-      redirect: "/account-locked",
+      message: "Too many failed attempts. Account has been locked.",
     };
   }
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { failedAttempts: attempts },
+    data: {
+      failedAttempts: nextAttempts,
+    },
   });
 
   return {
     locked: false,
-    attemptsLeft: 5 - attempts,
+    attemptsLeft: 5 - nextAttempts,
   };
 }
 
