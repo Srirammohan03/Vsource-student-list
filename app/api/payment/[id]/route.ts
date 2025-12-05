@@ -10,6 +10,19 @@ import { getChangedFields, PAYMENT_ALLOWED_FIELDS } from "@/utils/auditFields";
 export const GET = apiHandler(async (_req: Request, context: any) => {
   const { id } = context.params;
 
+  const token = cookies().get("token")?.value;
+  if (!token)
+    return NextResponse.json(new ApiResponse(401, null, "Not authenticated"));
+
+  let decoded: any;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!);
+  } catch (err) {
+    return NextResponse.json(
+      new ApiResponse(401, null, "Invalid or expired token")
+    );
+  }
+
   if (!id) throw new ApiError(400, "payment student id is required");
 
   const payment = await prisma.payment.findUnique({

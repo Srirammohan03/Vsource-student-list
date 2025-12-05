@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";

@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
@@ -54,7 +57,6 @@ export const PUT = apiHandler(async (req: Request, context: any) => {
     where: { id },
     data: body,
   });
-
 
   if (!updatedUser) {
     throw new ApiError(404, `No user found with id ${id}`);
@@ -168,10 +170,9 @@ export const GET = apiHandler(async (_req: Request, context: any) => {
 
   // Remove sensitive fields before sending response
   const safeUser: any = { ...user };
-  delete safeUser.password;   // 🚨 never expose password
+  delete safeUser.password; // 🚨 never expose password
 
   return NextResponse.json(
     new ApiResponse(200, safeUser, "user fetched successfully")
   );
 });
-

@@ -23,7 +23,15 @@ export default function InvoicePage({ params }: any) {
       <p className="text-center mt-10 text-red-600">Failed to load invoice</p>
     );
 
-  if (!data) return <p className="text-center mt-10 text-gray-600">Loading…</p>;
+  if (!data)
+    return (
+      <div className="flex  w-full min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
+          <p className="text-sm text-gray-600">Loading invoice...</p>
+        </div>
+      </div>
+    );
 
   return <InvoiceModal data={data} onClose={() => {}} />;
 }
