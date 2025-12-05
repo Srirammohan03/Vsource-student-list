@@ -1,4 +1,6 @@
-import { RegistrationStatus } from "@/lib/generated/prisma/enums";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";

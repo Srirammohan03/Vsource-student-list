@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
@@ -11,6 +14,19 @@ export const GET = apiHandler(async (req: Request) => {
   const { searchParams } = new URL(req.url);
 
   const type = searchParams.get("type");
+
+  const token = cookies().get("token")?.value;
+  if (!token)
+    return NextResponse.json(new ApiResponse(401, null, "Not authenticated"));
+
+  let decoded: any;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!);
+  } catch (err) {
+    return NextResponse.json(
+      new ApiResponse(401, null, "Invalid or expired token")
+    );
+  }
 
   if (type === "locked") {
     const users = await prisma.user.findMany({

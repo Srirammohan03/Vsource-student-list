@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { ApiError } from "@/utils/ApiError";
 import { apiHandler } from "@/utils/apiHandler";
 import { cookies } from "next/headers";
@@ -5,8 +8,6 @@ import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { ApiResponse } from "@/utils/ApiResponse";
-
-export const dynamic = "force-dynamic";
 
 export const GET = apiHandler(async () => {
   const token = cookies().get("token")?.value;
