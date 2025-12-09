@@ -89,7 +89,7 @@ model StudentRegistration {
 
   status RegistrationStatus @default(CONFIRMED)
 
-  payment Payment?
+  payment Payment[]
 
   createdBy     String
   createdByUser User   @relation("UserCreatedStudents", fields: [createdBy], references: [id])
@@ -111,18 +111,20 @@ model Payment {
   subFeeType    String?
   paymentMethod String
   amount        Float
-  invoiceNumber String        @unique // VS-25-26/B01
+  invoiceNumber String        @unique
   status        PaymentStatus @default(PENDING)
   bankDetails   String
   gst           Float?
   gstAmount     Float?
   referenceNo   String?
 
-  studentId String              @unique
+  studentId String
   student   StudentRegistration @relation(fields: [studentId], references: [id], onDelete: Cascade)
   date      DateTime            @default(now())
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
+
+  @@index([studentId])
 }
 
 enum PaymentStatus {

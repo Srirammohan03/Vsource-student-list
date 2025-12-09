@@ -20,12 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  keepPreviousData,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import axios from "axios";
@@ -81,6 +76,17 @@ export default function PaymentFormPage() {
     queryFn: ({ queryKey }) => fetchStudent(queryKey[1] as string),
     enabled: !!id,
   });
+
+  const totalPaid =
+    student?.payment?.reduce(
+      (sum: number, p: any) =>
+        p.status === "APPROVED" ? sum + Number(p.amount) : sum,
+      0
+    ) || 0;
+
+  const rawRemaining = (student?.serviceCharge || 0) - (totalPaid || 0);
+  const remaining = Math.max(0, rawRemaining);
+
   useEffect(() => {
     if (feeType === "service-fee") {
       const base = Number(amount) || 0;
@@ -105,7 +111,7 @@ export default function PaymentFormPage() {
     if (isStudentError) {
       toast({
         title: "Failed to load student",
-        description: studentError?.message || "Unable to fetch data",
+        description: (studentError as any)?.message || "Unable to fetch data",
         variant: "destructive",
       });
     }
@@ -135,21 +141,60 @@ export default function PaymentFormPage() {
         description: "Payment entry created.",
       });
       queryClient.invalidateQueries({ queryKey: ["student", id] });
-      // window.location.reload();
       router.push("/make-payment");
     },
     onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create payment";
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     },
   });
 
+  const isSubmitDisabled =
+    mutation.isPending || isStudentLoading || remaining <= 0;
+
+  // ✅ Client-side check: amount must NOT be greater than remaining
+  const handleSubmit = () => {
+    if (!feeType || !paymentMethod || !bankDetails || !amount) {
+      toast({
+        title: "Missing details",
+        description: "Please fill fee type, payment method, bank, and amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (amount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Amount must be greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (amount > remaining) {
+      toast({
+        title: "Invalid amount",
+        description: "Entered amount is greater than remaining balance.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    mutation.mutate();
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">Make Payments</h1>
+
       <div className="rounded-xl bg-white border shadow-sm p-6 mb-8">
         {isStudentLoading ? (
           <Skeleton className="h-32 w-full" />
@@ -166,6 +211,12 @@ export default function PaymentFormPage() {
               <p className="text-sm">
                 <span className="font-medium">Service Fee:</span>{" "}
                 {student?.serviceCharge}
+              </p>
+              <p className="text-sm">
+                <span className="font-medium">Total Paid:</span> {totalPaid}
+              </p>
+              <p className="text-sm">
+                <span className="font-medium">Remaining:</span> {remaining}
               </p>
             </div>
             <div className="space-y-4">
@@ -191,6 +242,7 @@ export default function PaymentFormPage() {
                   </SelectContent>
                 </Select>
               </div>
+
               <Select onValueChange={setBankDetails}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Bank" />
@@ -200,13 +252,30 @@ export default function PaymentFormPage() {
                 </SelectContent>
               </Select>
 
-              <Input
-                type="number"
-                className="h-9"
-                placeholder="Enter Amount"
-                value={amount}
-                onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
-              />
+              <div className="space-y-1">
+                <Input
+                  type="number"
+                  className="h-9"
+                  placeholder="Enter Amount"
+                  value={amount}
+                  onChange={(e) =>
+                    setAmount(Math.max(0, Number(e.target.value)))
+                  }
+                />
+                {/* {remaining > 0 && (
+                  <p className="text-xs text-slate-500">
+                    You can pay up to{" "}
+                    <span className="font-medium">{remaining}</span> only.
+                  </p>
+                )} */}
+                {amount > remaining && remaining > 0 && (
+                  <p className="text-xs text-red-600">
+                    Entered amount is greater than remaining. Please check
+                    amount.
+                  </p>
+                )}
+              </div>
+
               {needsReferenceNo && (
                 <Input
                   className="h-9"
@@ -215,15 +284,18 @@ export default function PaymentFormPage() {
                   onChange={(e) => setReferenceNo(e.target.value)}
                 />
               )}
+
               <Button
                 className="w-full h-9 mt-3"
-                disabled={mutation.isPending || student?.payment !== null}
-                onClick={() => mutation.mutate()}
+                disabled={isSubmitDisabled}
+                onClick={handleSubmit}
               >
                 {mutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...
                   </>
+                ) : remaining <= 0 ? (
+                  "Fully Paid"
                 ) : (
                   "Submit Payment"
                 )}
@@ -232,47 +304,59 @@ export default function PaymentFormPage() {
           </div>
         )}
       </div>
+
       <div className="rounded-xl bg-white p-6 shadow-md">
         <h2 className="text-lg font-semibold mb-4">Payment History</h2>
+
         {isStudentLoading ? (
           <Skeleton className="h-40 w-full" />
-        ) : !student?.payment ? (
+        ) : !student?.payment || student.payment.length === 0 ? (
           <p>No Payment history found</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>S.No</TableHead>
-                <TableHead>Student Name</TableHead>
-                <TableHead>Fee Type</TableHead>
-                <TableHead>Sub Fee Type</TableHead>
-                <TableHead>Paid Amount</TableHead>
-                <TableHead>Type of Payment</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Payment Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>{1}</TableCell>
-                <TableCell>{student?.studentName}</TableCell>
-                <TableCell>
-                  {student?.payment?.feeType?.toUpperCase()}
-                </TableCell>
-                <TableCell>{student?.payment?.subFeeType || "N/A"}</TableCell>
-                <TableCell>{student?.payment?.amount}</TableCell>
-                <TableCell>{student?.payment?.paymentMethod}</TableCell>
-                <TableCell>{student?.payment?.invoiceNumber}</TableCell>
-                <TableCell>
-                  {new Date(student?.payment?.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-green-600">
-                  {student?.payment?.status}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>S.No</TableHead>
+                  <TableHead>Student Name</TableHead>
+                  <TableHead>Fee Type</TableHead>
+                  <TableHead>Sub Fee Type</TableHead>
+                  <TableHead>Paid Amount</TableHead>
+                  <TableHead>Type of Payment</TableHead>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Payment Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {student.payment.map((p: any, idx: number) => (
+                  <TableRow key={p.id}>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>{student.studentName}</TableCell>
+                    <TableCell>{p.feeType?.toUpperCase()}</TableCell>
+                    <TableCell>{p.subFeeType || "S.C (GST)"}</TableCell>
+                    <TableCell>{p.amount}</TableCell>
+                    <TableCell>{p.paymentMethod}</TableCell>
+                    <TableCell>{p.invoiceNumber}</TableCell>
+                    <TableCell>
+                      {new Date(p.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell
+                      className={
+                        p.status === "APPROVED"
+                          ? "text-green-600"
+                          : p.status === "FAILED"
+                          ? "text-red-600"
+                          : "text-yellow-600"
+                      }
+                    >
+                      {p.status}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </>
         )}
       </div>
     </div>

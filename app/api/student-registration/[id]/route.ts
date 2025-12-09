@@ -185,9 +185,13 @@ export const GET = apiHandler(async (_req: Request, context: any) => {
 
       // status / others
       status: true,
-      payment: true,
       createdAt: true,
       updatedAt: true,
+
+      // ⬇️ payments as an ARRAY, ordered by date/createdAt
+      payment: {
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -195,7 +199,22 @@ export const GET = apiHandler(async (_req: Request, context: any) => {
     throw new ApiError(404, `No student found with this id ${id}`);
   }
 
+  // ⬇️ compute totals for UI convenience
+  const totalPaid =
+    student.payment?.reduce(
+      (sum, p) =>
+        p.status === "APPROVED" ? sum + Number(p.amount) : sum,
+      0
+    ) || 0;
+
+  const remaining = (student.serviceCharge || 0) - totalPaid;
+
   return NextResponse.json(
-    new ApiResponse(200, student, "user fetched successfully")
+    new ApiResponse(
+      200,
+      { ...student, totalPaid, remaining },
+      "student fetched successfully"
+    )
   );
 });
+

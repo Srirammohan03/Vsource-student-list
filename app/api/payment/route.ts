@@ -16,11 +16,13 @@ function generateInvoiceNumber(lastInvoice?: string) {
   const shortYear = currentYear.toString().slice(2);
   const shortNext = nextYear.toString().slice(2);
   const yearRange = `${shortYear}-${shortNext}`;
+
   let nextNumber = 1;
   if (lastInvoice) {
     const match = lastInvoice.match(/B(\d+)$/);
     nextNumber = match ? parseInt(match[1]) + 1 : 1;
   }
+
   return `VV/${yearRange}/B${nextNumber.toString().padStart(2, "0")}`;
 }
 
@@ -66,7 +68,6 @@ export const POST = apiHandler(async (req: Request) => {
 
   const student = await prisma.studentRegistration.findUnique({
     where: { id: body.studentId },
-    include: { payment: true },
   });
 
   if (!student) throw new ApiError(404, "Student not found");
@@ -75,8 +76,30 @@ export const POST = apiHandler(async (req: Request) => {
     throw new ApiError(400, "Payment allowed only for confirmed students");
   }
 
-  if (student.payment) {
-    throw new ApiError(400, "This student already has a payment record");
+  // 🔢 Check how much is already paid for this student
+  const aggregate = await prisma.payment.aggregate({
+    _sum: { amount: true },
+    where: {
+      studentId: body.studentId,
+      status: "APPROVED",
+    },
+  });
+
+  const alreadyPaid = aggregate._sum.amount || 0;
+  const totalFee = student.serviceCharge;
+  const remaining = totalFee - alreadyPaid;
+
+  // ✅ If already fully paid → show "payment existing" type error
+  if (remaining <= 0) {
+    throw new ApiError(400, "Payment already exists for this student");
+  }
+
+  // ✅ If trying to pay more than remaining → block
+  if (body.amount > remaining) {
+    throw new ApiError(
+      400,
+      `Payment exceeds remaining amount. Remaining: ${remaining}`
+    );
   }
 
   const currentYear = new Date().getFullYear();
@@ -102,7 +125,9 @@ export const POST = apiHandler(async (req: Request) => {
     while (exists) {
       const match = nextInvoiceNumber.match(/B(\d+)$/);
       let num = match ? parseInt(match[1]) + 1 : 1;
-      nextInvoiceNumber = `VV/${yearRange}/B${num.toString().padStart(2, "0")}`;
+      nextInvoiceNumber = `VV/${yearRange}/B${num
+        .toString()
+        .padStart(2, "0")}`;
       exists = await tx.payment.findUnique({
         where: { invoiceNumber: nextInvoiceNumber },
       });
@@ -198,12 +223,10 @@ export const GET = apiHandler(async (req: Request) => {
       },
     },
   });
-  let message;
-  if (!payments.length) {
-    message = "No payments found";
-  } else {
-    message = "payment fetched successfully";
-  }
+
+  const message = payments.length
+    ? "payment fetched successfully"
+    : "No payments found";
 
   return NextResponse.json(new ApiResponse(200, payments, message));
 });
