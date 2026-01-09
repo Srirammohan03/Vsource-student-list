@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -26,7 +27,6 @@ import {
   Footprints,
   AlertCircle,
 } from "lucide-react";
-import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
 import { roleAccess } from "@/utils/roleAccess";
 
@@ -52,35 +52,32 @@ const menuItems = [
 
 export function AppSidebar() {
   const { user } = useAuth();
-  const { state, isMobile, openMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const { state, isMobile, openMobile, setOpenMobile } = useSidebar();
 
   const allowedRoutes =
     user?.role && roleAccess[user.role] ? roleAccess[user.role] : [];
 
   const handleNavClick = () => {
-    if (isMobile && openMobile) {
-      setOpenMobile(false);
-    }
+    if (isMobile && openMobile) setOpenMobile(false);
   };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarContent>
         {/* Logo */}
-        <div className="flex items-center px-4 py-4">
+        <div className="flex items-center justify-center px-4 py-4">
           <div
             className={cn(
-              "relative h-20 flex items-center justify-center transition-all duration-300 ease-in-out",
-              state !== "collapsed" ? "w-60" : "w-20"
+              "relative transition-all duration-300",
+              state === "collapsed" ? "h-12 w-12" : "h-14 w-44"
             )}
           >
             <Image
               src={
-                state !== "collapsed"
-                  ? "/assets/logo.webp"
-                  : "/assets/logo-small.png"
+                state === "collapsed"
+                  ? "/assets/logo-small.png"
+                  : "/assets/logo.webp"
               }
               alt="VSource Education"
               fill
@@ -101,20 +98,25 @@ export function AppSidebar() {
                     allowedRoutes.includes(item.href)
                 )
                 .map((item) => {
-                  const active = pathname === item.href;
+                  const isActive = pathname === item.href;
+
                   return (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton asChild isActive={isActive(item.href)}>
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.label}
+                        onClick={handleNavClick}
+                      >
                         <Link
                           href={item.href}
-                          onClick={handleNavClick}
                           className={cn(
-                            "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-sidebar-accent",
-                            active && "bg-primary/10 text-primary font-semibold"
+                            "flex w-full items-center gap-3 cursor-pointer",
+                            isActive && "font-semibold"
                           )}
                         >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -125,7 +127,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-slate-200 px-4 py-3 text-[11px] text-slate-500">
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-3 text-[11px] text-muted-foreground">
         {state !== "collapsed"
           ? `© ${new Date().getFullYear()} VSource Education`
           : `© ${new Date().getFullYear()}`}
