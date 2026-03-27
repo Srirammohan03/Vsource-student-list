@@ -19,7 +19,7 @@ function getFinancialYearInfo(date = new Date()) {
     return {
       startYear: year,
       endYear: year + 1,
-      prefix: "S",
+      prefix: "B",
     };
   }
 
@@ -128,7 +128,7 @@ export const POST = apiHandler(async (req: Request) => {
           startsWith: `VV/${fy}/${prefix}`,
         },
       },
-      orderBy: { invoiceNumber: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     let nextInvoiceNumber = generateInvoiceNumber(
